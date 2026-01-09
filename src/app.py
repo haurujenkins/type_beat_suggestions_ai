@@ -261,9 +261,19 @@ if uploaded_file is not None and model is not None:
             # Sort by probability descending
             results.sort(key=lambda x: x[1], reverse=True)
             
-            winner_artist = results[0][0]
-            winner_conf = results[0][1] * 100
-            top_artists = results[:10]
+            # Take Top 8
+            top_8_raw = results[:8]
+            
+            # Normalize probabilities to sum to 100% for these 8
+            # This makes the results look more confident/relevant to the user
+            total_mass = sum(score for _, score in top_8_raw)
+            if total_mass > 0:
+                top_artists = [(artist, score / total_mass) for artist, score in top_8_raw]
+            else:
+                top_artists = top_8_raw
+            
+            winner_artist = top_artists[0][0]
+            winner_conf = top_artists[0][1] * 100
             
             # Store results
             analysis_results = {
@@ -311,7 +321,7 @@ if uploaded_file is not None and model is not None:
         """, unsafe_allow_html=True)
         
         st.subheader("Styles & Tendances")
-        st.caption("Top 10 Probabilités (Encadré Vert = Top 3 Demande YouTube)")
+        st.caption("Top 8 Probabilités (Encadré Vert = Top 3 Demande YouTube)")
         
         # Horizontal Layout (Flexbox)
         html_cards = '<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px;">'
