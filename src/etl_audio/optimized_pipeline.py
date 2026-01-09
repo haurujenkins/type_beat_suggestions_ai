@@ -272,7 +272,7 @@ class DataPipeline:
 
     def _process_v2_spectrogram(self, y, sr, label, filename):
         """
-        Generates Mel-Spectrogram and saves as .npy
+        Generates Mel-Spectrogram and saves as .npz (compressed, float32)
         """
         # Ensure consistent length or treat full? 
         # User said "Audio complet (ou slices, disons complet pour l'instant)"
@@ -286,8 +286,8 @@ class DataPipeline:
             hop_length=self.hop_length
         )
         
-        # Convert to Log-Mel (dB)
-        S_dB = librosa.power_to_db(S, ref=np.max)
+        # Convert to Log-Mel (dB) and cast to float32 for storage optimization
+        S_dB = librosa.power_to_db(S, ref=np.max).astype(np.float32)
         
         # Save
         # Filename safe cleaning
@@ -297,11 +297,11 @@ class DataPipeline:
         artist_dir = os.path.join(self.v2_dir, label)
         os.makedirs(artist_dir, exist_ok=True)
         
-        out_name = f"{label}__{safe_name}.npy" # Convention: Artist__Title.npy
+        out_name = f"{label}__{safe_name}.npz" # Convention: Artist__Title.npz
         out_path = os.path.join(artist_dir, out_name)
         
-        np.save(out_path, S_dB)
-        print(f"    🧠 V2: Saved Log-Mel Spectrogram to {label}/{out_name}")
+        np.savez_compressed(out_path, spec=S_dB)
+        print(f"    🧠 V2: Saved Log-Mel Spectrogram to {label}/{out_name} (compressed)")
 
 
 if __name__ == "__main__":
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     pipeline = DataPipeline()
     
     # List of artists to process
-    artists_to_process = ["Bu$hi"]
+    artists_to_process = ["Freeze Corleone"]
     
     for artist in artists_to_process:
         # Lower threshold to ensure we get results for smaller artists/queries

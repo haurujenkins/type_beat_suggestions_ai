@@ -39,6 +39,7 @@ ARTIST_SEARCH_HELPER = {
 ARTIST_ID_OVERRIDES = {
     "Laylow": "0LnhY2fzptb0QEs5Q5gM7S",
     "Hamza": "5gs4Sm2WQUkcGeikMcVHbh",
+    "Booba": "58wXmynHaAWI5hwlPZP3qL",
 }
 
 # --- YOUTUBE FUNCTIONS ---

@@ -19,7 +19,8 @@ data/v2_spectrograms/
 !data/artist_popularity.csv
 
 # Models (Usually ignored, but needed for V1 Vercel/Cloud deployment)
-!models/type_beat_model.pkl
+# !models/type_beat_model.pkl (Too big for GitHub > 100MB)
+models/type_beat_model.pkl
 !models/scaler.pkl
 !models/encoder.pkl
 
