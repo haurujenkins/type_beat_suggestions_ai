@@ -1,7 +1,8 @@
 # Projet IA Musicale
 
-Ce projet vise à constituer un dataset local à partir de l'API Spotify, puis à entraîner un modèle de mapping basé sur l'analyse audio (Essentia).
+Ce projet vise à constituer un dataset local à partir de type beat d'artistes variés afin de prédire et suggérer des artistes pour de nouvelles instrumentales. Cet outil est un outil SEO de suggestion d'artiste par reconnaissance IA sur des caractéristiques audio. Il est aussi doté d'un enrichissement des suggestions par analyse des tendances actuelles sur youtube et spotify.
 
+Tester l'application : https://type-beat-suggestion-ai.streamlit.app/
 
 to dl from youtube playlist :
      yt-dlp -x --audio-format mp3 --audio-quality 0 --restrict-filenames --download-sections "*1:00-1:45" -o "data/raw_audio/Eminem/%(title)s.%(ext)s" "https://youtube.com/playlist\?list\=PLdxBy4Ifgex-1v5u6CzhYo-6WUR_LdGpf\&si\=VFZbSSHF8NdBTvkj"

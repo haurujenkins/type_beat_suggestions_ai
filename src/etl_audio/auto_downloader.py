@@ -9,7 +9,7 @@ BASE_OUTPUT_DIR = "data/raw_audio"
 CSV_PATH = "data/dataset_audio.csv"
 
 # LISTE DES ARTISTES À TÉLÉCHARGER
-ARTISTS_TO_DOWNLOAD = ["Luther"]
+ARTISTS_TO_DOWNLOAD = ["Gims"]
 
 DURATION_START = 60
 DURATION_END = 105

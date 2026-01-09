@@ -35,6 +35,12 @@ ARTIST_SEARCH_HELPER = {
     "Jul": "JuL",
 }
 
+# Mapping ID manuel pour forcer l'artiste exact (évite les homonymes)
+ARTIST_ID_OVERRIDES = {
+    "Laylow": "0LnhY2fzptb0QEs5Q5gM7S",
+    "Hamza": "5gs4Sm2WQUkcGeikMcVHbh",
+}
+
 # --- YOUTUBE FUNCTIONS ---
 def get_youtube_popularity(artist_name):
     """
@@ -126,6 +132,22 @@ def get_youtube_popularity(artist_name):
 def get_spotify_data(artist_name):
     if not sp: return None
     
+    # Check ID overrides first
+    if artist_name in ARTIST_ID_OVERRIDES:
+        try:
+            artist = sp.artist(ARTIST_ID_OVERRIDES[artist_name])
+            print(f"    [!] Used manual ID override for {artist_name}")
+            return {
+                "spotify_name": artist['name'],
+                "popularity": artist['popularity'],
+                "genres": str(artist['genres']),
+                "spotify_id": artist['id'],
+            }
+        except Exception as e:
+            print(f"    [X] Error using ID override for {artist_name}: {e}")
+            # Fallback to search if ID fails
+            pass
+
     search_query = ARTIST_SEARCH_HELPER.get(artist_name, artist_name)
     try:
         # 1. Search with 'artist:' prefix
@@ -184,7 +206,10 @@ def main():
             df_target['search_name'] = ""
             
         # --- NETTOYAGE ANCIENNES COLONNES ---
-        cols_to_drop = ['hype_score', 'youtube_videos_7d', 'youtube_views_7d']
+        cols_to_drop = [
+            'hype_score', 'youtube_videos_7d', 'youtube_views_7d',
+            'spotify_popularity', 'spotify_genres', 'spotify_followers', 'spotify_url', 'img_url'
+        ]
         existing_drop = [c for c in cols_to_drop if c in df_target.columns]
         if existing_drop:
             print(f"Dropping old columns: {existing_drop}")
