@@ -3,5 +3,6 @@ data/
 .env
 .venv/
 models/
+.cache
 __pycache__/
 *.pyc
