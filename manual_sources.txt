@@ -1,0 +1,11 @@
+# Copiez-collez ici les liens des playlists ou des vidéos YouTube pour chaque artiste
+# Format: ARTISTE_NAME|URL
+
+Zamdane|https://www.youtube.com/playlist?list=PLg4c-U-1q7ri_6tQ_aQo2h6y4r_jXh8k8
+Zamdane|https://www.youtube.com/results?search_query=zamdane+type+beat
+
+Jolagreen|https://www.youtube.com/results?search_query=jolagreen+type+beat
+Yvnnis|https://www.youtube.com/results?search_query=yvnnis+type+beat
+J9ueve|https://www.youtube.com/results?search_query=j9ueve+type+beat
+Josman|https://www.youtube.com/results?search_query=josman+type+beat
+Rounhaa|https://www.youtube.com/results?search_query=rounhaa+type+beat

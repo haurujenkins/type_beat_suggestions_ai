@@ -1,0 +1,7 @@
+# Données et fichiers temporaires
+data/
+.env
+.venv/
+models/
+__pycache__/
+*.pyc
