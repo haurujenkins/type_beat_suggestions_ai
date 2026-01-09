@@ -58,11 +58,11 @@ def train_model():
     # 5. ENSEMBLE MODEL (Le "Avengers" des modèles)
     print("🚀 Entraînement de l'Ensemble (RF + MLP + KNN)...")
     
-    # Model A: Random Forest (Solide, généraliste)
-    clf_rf = RandomForestClassifier(n_estimators=250, random_state=42, n_jobs=-1, class_weight='balanced')
+    # Model A: Random Forest (Reduced estimators to save space)
+    clf_rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, class_weight='balanced')
     
     # Model B: Réseau de Neurones simple (Bon pour les patterns audio complexes MFCC)
-    clf_mlp = MLPClassifier(hidden_layer_sizes=(256, 128), max_iter=500, random_state=42)
+    clf_mlp = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=500, random_state=42)
     
     # Model C: KNN (Capture les structures locales)
     clf_knn = KNeighborsClassifier(n_neighbors=9, weights='distance', n_jobs=-1)
@@ -98,7 +98,7 @@ def train_model():
 
     # 7. Sauvegarde (Compressée pour passer sur GitHub < 100Mo)
     print("💾 Sauvegarde du modèle Ensemble (Compression active)...")
-    joblib.dump(eclf, MODEL_PATH, compress=3)
+    joblib.dump(eclf, MODEL_PATH, compress=9)
     joblib.dump(scaler, SCALER_PATH)
     joblib.dump(le, ENCODER_PATH)
     print("✅ Terminé !")

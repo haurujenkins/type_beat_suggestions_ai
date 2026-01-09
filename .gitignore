@@ -12,6 +12,7 @@ data/dataset_audio.csv
 data/local_db/
 data/processed_features/
 data/sources_externes/
+data/v2_spectrograms/
 
 # --- WHITELIST (V1 Release) ---
 # We need these for the App to run!
