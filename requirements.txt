@@ -5,7 +5,7 @@ pandas
 
 # Audio & ML
 librosa
-scikit-learn
+scikit-learn==1.7.2
 joblib
 
 # Optional but recommended for file watching locally
