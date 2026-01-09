@@ -27,3 +27,5 @@ data/v2_spectrograms/
 *.mp3
 *.wav
 temp_audio.mp3
+data/temp_audio/
+.DS_Store

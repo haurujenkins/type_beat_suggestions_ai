@@ -309,9 +309,9 @@ if __name__ == "__main__":
     pipeline = DataPipeline()
     
     # List of artists to process
-    artists_to_process = ["Guy2bezbar"]
+    artists_to_process = ["Bu$hi"]
     
     for artist in artists_to_process:
         # Lower threshold to ensure we get results for smaller artists/queries
-        # User requested up to 200 videos
-        pipeline.run_for_artist(artist, max_videos=200, min_views=1000)
+        # User requested up to 100 videos
+        pipeline.run_for_artist(artist, max_videos=100, min_views=1000)
