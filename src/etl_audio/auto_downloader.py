@@ -9,7 +9,7 @@ BASE_OUTPUT_DIR = "data/raw_audio"
 CSV_PATH = "data/dataset_audio.csv"
 
 # LISTE DES ARTISTES À TÉLÉCHARGER
-ARTISTS_TO_DOWNLOAD = ["Hamza"]
+ARTISTS_TO_DOWNLOAD = ["La fève"]
 
 DURATION_START = 60
 DURATION_END = 105
@@ -93,7 +93,7 @@ def download_artist_beats(artist_name):
             'ignoreerrors': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['IOS', 'web']
+                    'player_client': ['android', 'web']
                 }
             },
             'sleep_interval': 2,
@@ -147,7 +147,7 @@ def download_artist_beats(artist_name):
         # Astuce : On se fait passer pour un client Android pour éviter le sign-in
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web']
+                'player_client': ['IOS', 'web']
             }
         },
         'sleep_interval': 3,
