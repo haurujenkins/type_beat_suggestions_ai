@@ -96,9 +96,9 @@ def train_model():
     print("\n📊 Rapport détaillé Top-1 :")
     print(classification_report(y_test, y_pred, target_names=le.classes_))
 
-    # 7. Sauvegarde
-    print("💾 Sauvegarde du modèle Ensemble...")
-    joblib.dump(eclf, MODEL_PATH)
+    # 7. Sauvegarde (Compressée pour passer sur GitHub < 100Mo)
+    print("💾 Sauvegarde du modèle Ensemble (Compression active)...")
+    joblib.dump(eclf, MODEL_PATH, compress=3)
     joblib.dump(scaler, SCALER_PATH)
     joblib.dump(le, ENCODER_PATH)
     print("✅ Terminé !")

@@ -9,7 +9,7 @@ BASE_OUTPUT_DIR = "data/raw_audio"
 CSV_PATH = "data/dataset_audio.csv"
 
 # LISTE DES ARTISTES À TÉLÉCHARGER
-ARTISTS_TO_DOWNLOAD = ["La fève"]
+ARTISTS_TO_DOWNLOAD = ["Luther"]
 
 DURATION_START = 60
 DURATION_END = 105
@@ -101,7 +101,7 @@ def download_artist_beats(artist_name):
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
-                # On utilise la limite définie par l'appeleur
+                # On utilise la limite passée en paramètre (pas de restriction à 50)
                 search_results = ydl.extract_info(f"ytsearch{search_limit}:{search_query}", download=False)
                 
                 if 'entries' in search_results:
@@ -147,7 +147,7 @@ def download_artist_beats(artist_name):
         # Astuce : On se fait passer pour un client Android pour éviter le sign-in
         'extractor_args': {
             'youtube': {
-                'player_client': ['IOS', 'web']
+                'player_client': ['android', 'web']
             }
         },
         'sleep_interval': 3,

@@ -1,8 +1,28 @@
-# Données et fichiers temporaires
-data/
+# --- GENERATED EXCLUSIONS ---
+# Python & Env
 .env
 .venv/
-models/
 .cache
 __pycache__/
 *.pyc
+
+# Local Data (Ignored)
+data/raw_audio/
+data/dataset_audio.csv
+data/local_db/
+data/processed_features/
+data/sources_externes/
+
+# --- WHITELIST (V1 Release) ---
+# We need these for the App to run!
+!data/artist_popularity.csv
+
+# Models (Usually ignored, but needed for V1 Vercel/Cloud deployment)
+!models/type_beat_model.pkl
+!models/scaler.pkl
+!models/encoder.pkl
+
+# Temp files
+*.mp3
+*.wav
+temp_audio.mp3
