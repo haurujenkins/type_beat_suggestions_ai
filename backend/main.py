@@ -71,32 +71,36 @@ load_artist_metadata_light()
 # --- FONCTIONS UTILITAIRES ---
 def extract_features_light(file_path):
     """
-    Extraction sans Pandas. Retourne une liste de dictionnaires.
+    Extraction STREAMÉE (Memory Optimized).
+    Ne charge JAMAIS le fichier entier en mémoire. 
+    Charge morceau par morceau (30s) avec librosa.load(offset, duration).
     """
     SAMPLE_RATE = 22050
     DURATION_SLICE = 30
     
     try:
-        y_full, sr = librosa.load(file_path, sr=SAMPLE_RATE)
-        total_samples = len(y_full)
-        samples_per_slice = sr * DURATION_SLICE
-        
-        # Slicing efficace (Générateur ou liste simple)
-        slices = []
-        if total_samples < samples_per_slice:
-            slices = [np.pad(y_full, (0, samples_per_slice - total_samples), 'constant')]
-        else:
-            for i in range(0, total_samples, samples_per_slice):
-                segment = y_full[i : i + samples_per_slice]
-                if len(segment) >= (sr * 10): 
-                    if len(segment) < samples_per_slice:
-                        segment = np.pad(segment, (0, samples_per_slice - len(segment)), 'constant')
-                    slices.append(segment)
+        # 1. Obtenir la durée totale sans charger le son
+        total_duration = librosa.get_duration(path=file_path)
         
         all_features = []
         
-        for y in slices:
-            # Extraction pure
+        # 2. Itérer par blocs de 30 secondes
+        for offset in range(0, int(total_duration), DURATION_SLICE):
+            
+            # --- CHARGEMENT PARTIEL (CRITIQUE POUR RAM) ---
+            # On ne charge que 30 secondes en mémoire
+            y, sr = librosa.load(file_path, sr=SAMPLE_RATE, offset=offset, duration=DURATION_SLICE)
+            
+            # Ignorer si trop court (<5s pour être sûr)
+            if len(y) < (sr * 5):
+                continue
+                
+            # Padding si < 30s
+            target_length = sr * DURATION_SLICE
+            if len(y) < target_length:
+                y = np.pad(y, (0, target_length - len(y)), 'constant')
+            
+            # --- EXTRACTION ---
             tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
             rms = librosa.feature.rms(y=y)
             zcr = librosa.feature.zero_crossing_rate(y)
@@ -107,10 +111,8 @@ def extract_features_light(file_path):
 
             tempo_val = float(tempo.item()) if hasattr(tempo, 'item') else float(tempo)
             
-            # Construction Dict (très léger)
             features = {"tempo": tempo_val}
             
-            # Stats basiques
             features["rms_mean"] = float(np.mean(rms))
             features["rms_var"] = float(np.var(rms))
             features["zcr_mean"] = float(np.mean(zcr))
@@ -128,6 +130,10 @@ def extract_features_light(file_path):
                 features[f"chroma_{i}_var"]  = float(np.var(chroma[i]))
                 
             all_features.append(features)
+            
+            # Libérer explicitement la mémoire du fragment audio
+            del y
+            del rms, zcr, spec_cent, spec_roll, mfccs, chroma
             
         return all_features # List[Dict]
         

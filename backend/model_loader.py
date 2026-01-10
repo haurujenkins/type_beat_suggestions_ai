@@ -19,10 +19,11 @@ def load_ai_models(models_dir="models"):
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Fichier modèle introuvable: {model_path}")
 
-        # Chargement avec joblib
-        model = joblib.load(model_path)
-        scaler = joblib.load(scaler_path)
-        encoder = joblib.load(encoder_path)
+        # Chargement avec joblib en mode mmap pour réduire l'empreinte RAM
+        # Cela garde le fichier sur le disque et ne charge les pages qu'à la demande
+        model = joblib.load(model_path, mmap_mode='r')
+        scaler = joblib.load(scaler_path, mmap_mode='r')
+        encoder = joblib.load(encoder_path) # Encodeur est petit, pas de mmap nécessaire
 
         # Récupération des features attendues (si disponible dans le scaler)
         expected_features = getattr(scaler, 'feature_names_in_', None)
