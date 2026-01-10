@@ -70,28 +70,75 @@ export default function Home() {
 
     const formData = new FormData();
     formData.append('file', file);
+    
+    // URL cible (variable d'env en PROD, hardcodée ici par sécurité suite à la demande)
+    const targetUrl = 'https://type-beat-suggestions-ai.onrender.com/predict';
 
     try {
-      // Simulation d'étape d'upload pour l'UX si c'est très rapide
-      await new Promise(r => setTimeout(r, 500));
+      console.log("🚀 Envoi vers l'URL :", targetUrl);
+
+      // Simulation d'UX pour voir le loader (optionnel)
+      // await new Promise(r => setTimeout(r, 500)); 
+      
       setStatus('analyzing');
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(targetUrl, {
         method: 'POST',
         body: formData,
+        // PAS DE CONTENT-TYPE MANUEL AVEC FORMDATA !
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur serveur (${response.status})`);
+        // Tentative de lire le message d'erreur JSON du backend
+        let errorMsg = `Erreur serveur (${response.status})`;
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) errorMsg = errorData.detail;
+        } catch (e) {
+             // Si le body n'est pas json (ex: erreur système Render)
+        }
+        throw new Error(errorMsg);
       }
 
-      const data: ApiResponse = await response.json();
-      setResult(data);
+      // 1. Récupération des données brutes
+      const rawData = await response.json();
+      console.log("📦 Réponse Backend reçue :", rawData);
+
+      // 2. Mapping de la structure Backend (backend/main.py) vers l'interface Frontend (ApiResponse)
+      // Backend: { input_filename, recommendations: [{ rank, filename, label, distance, preview_path }] }
+      // Frontend: { prediction, confidence, details: [{ artist, score, views }] }
+      
+      const recommendations = rawData.recommendations || [];
+      const topMatch = recommendations[0] || {};
+      
+      // Conversion Distance -> Score de confiance (Distance cosine : 0 = identique, 1 = opposé)
+      // Une distance de 0.1 est très proche. On inverse pour afficher un score.
+      const toScore = (dist: number) => Math.max(0, 1 - dist); 
+
+      const adaptedResult: ApiResponse = {
+        prediction: topMatch.label || "Inconnu",
+        confidence: toScore(topMatch.distance || 0),
+        details: recommendations.map((rec: any) => ({
+          artist: rec.label,
+          score: toScore(rec.distance || 0),
+          views: 0 // Donnée pas encore dispo dans le backend V2 light
+        }))
+      };
+
+      setResult(adaptedResult);
       setStatus('success');
-    } catch (err) {
-      console.error(err);
+
+    } catch (err: any) {
+      console.error("❌ Erreur catchée :", err);
       setStatus('error');
-      setErrorMessage("Impossible de contacter l'IA. Le serveur redémarre peut-être, réessayez dans 30s.");
+      // Gestion des erreurs spécifiques (timeout, network, etc)
+      if (err.message.includes('422')) {
+        setErrorMessage("Le fichier envoyé n'est pas valide (422).");
+      } else if (err.message.includes('503')) {
+        setErrorMessage("Le modèle est encore en cours chargement. Réessayez dans 10 secondes.");
+      } else {
+        setErrorMessage(err.message || "Erreur de connexion au serveur.");
+      }
     }
   };
 
