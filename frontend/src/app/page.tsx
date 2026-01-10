@@ -24,8 +24,8 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // URL API depuis variable d'environnement (avec fallback localhost pour le dev)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/predict';
+  // URL API depuis variable d'environnement (avec fallback sur la PROD pour garantir le fonctionnement)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://type-beat-suggestions-ai.onrender.com/predict';
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -71,18 +71,15 @@ export default function Home() {
     const formData = new FormData();
     formData.append('file', file);
     
-    // URL cible (variable d'env en PROD, hardcodée ici par sécurité suite à la demande)
-    const targetUrl = 'https://type-beat-suggestions-ai.onrender.com/predict';
-
     try {
-      console.log("🚀 Envoi vers l'URL :", targetUrl);
+      console.log("🚀 Envoi vers l'URL :", API_URL);
 
       // Simulation d'UX pour voir le loader (optionnel)
       // await new Promise(r => setTimeout(r, 500)); 
       
       setStatus('analyzing');
 
-      const response = await fetch(targetUrl, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         body: formData,
         // PAS DE CONTENT-TYPE MANUEL AVEC FORMDATA !
