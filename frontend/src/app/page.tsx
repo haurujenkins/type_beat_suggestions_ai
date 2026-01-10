@@ -25,7 +25,9 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // URL API depuis variable d'environnement (avec fallback sur la PROD pour garantir le fonctionnement)
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://type-beat-suggestions-ai.onrender.com/predict';
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || 'https://type-beat-suggestions-ai.onrender.com';
+  // Sécurité : on s'assure que l'URL termine bien par /predict
+  const API_URL = envUrl.endsWith('/predict') ? envUrl : `${envUrl}/predict`;
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
