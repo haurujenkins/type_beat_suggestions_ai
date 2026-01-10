@@ -1,66 +1,81 @@
 search_name,spotify_name,popularity,genres,spotify_id,youtube_avg_views,youtube_video_count,youtube_updated
-Jul,Jul,84.0,"['french rap', 'pop urbaine']",3IW7ScrzXmPvZhB27hmfgy,1591.0,74.0,2026-01-09
-Nekfeu,Nekfeu,68.0,['french rap'],4LXBc13z5EWsc5N32bLxfH,1225.0,67.0,2026-01-09
-Josman,Josman,71.0,['french rap'],6dbdXbyAWk2qx8Qttw0knR,1880.0,54.0,2026-01-09
-Ninho,Ninho,81.0,"['french rap', 'pop urbaine']",6Te49r3A6f5BiIgBRxH7FH,2057.0,71.0,2026-01-09
-Damso,Damso,77.0,"['french rap', 'pop urbaine', 'french r&b']",2UwqpfQtNuhBwviIC0f2ie,1075.0,58.0,2026-01-09
-Rounhaa,Rounhaa,48.0,"['french rap', 'new wave']",6jFcJYXzABu7Us9iwENUJe,1764.0,63.0,2026-01-09
-Jolagreen,Jolagreen23,60.0,['french rap'],2jZ78PLlC1PuYKQ2bVwRvz,2009.0,71.0,2026-01-09
-SCH,SCH,74.0,"['french rap', 'pop urbaine']",2kXKa3aAFngGz2P4GjG5w2,2877.0,92.0,2026-01-09
-Yvnnis,Yvnnis,55.0,"['french rap', 'new wave']",2Av0IgTSSDYLJNajJrQwyb,1461.0,77.0,2026-01-09
-Zamdane,Zamdane,63.0,['french rap'],5CtPAGoxpJ4yLJLx6CSrO8,1886.0,67.0,2026-01-09
-J9ueve,J9ueve,52.0,['french rap'],4fj5OWrMmlCbrc3PocAcl1,1685.0,75.0,2026-01-09
-TIF,TIF,60.0,"['french rap', 'moroccan rap', 'moroccan pop']",2NgTPluNpfsoYZnoeU2VsH,2063.0,64.0,2026-01-09
-Vacra,Vacra,65.0,"['french rap', 'french r&b', 'pop urbaine']",5OLkn5GT6EcMuJzjwgvQnu,3468.0,83.0,2026-01-09
-PNL,PNL,76.0,"['french rap', 'pop urbaine']",3NH8t45zOTqzlZgBvZRjvB,1227.0,77.0,2026-01-09
-Ino_Casablanca,Ino Casablanca,55.0,['french rap'],5blvB6N3OACeH0gJL9BRqf,4382.0,69.0,2026-01-09
-La_fève,La Fève,59.0,"['french rap', 'new wave']",2sBKOwN0fSjx39VtL2WpjJ,1049.0,38.0,2026-01-09
-PLK,PLK,74.0,"['french rap', 'pop urbaine']",3DCWeG2J1fZeu0Oe6i5Q6m,3011.0,66.0,2026-01-09
-Timar,Timar,71.0,['french rap'],4BUeuxQIWI69tEYuvzbv6D,3234.0,80.0,2026-01-09
-Hamza,Hamza,74.0,"['french rap', 'pop urbaine', 'french r&b']",5gs4Sm2WQUkcGeikMcVHbh,1491.0,68.0,2026-01-09
-Huntrill,Huntrill,55.0,['french rap'],1Nm9adUt6D5iuhRgirlgF2,1121.0,74.0,2026-01-09
-Jungle_Jack,Jungle Jack,53.0,['french rap'],36HOtWiV4nn0luNGSn2xAT,1426.0,73.0,2026-01-09
-Alpha_Wann,Alpha Wann,58.0,['french rap'],7yeFMUrYTY5cAZx0GKXnti,1994.0,64.0,2026-01-09
-Laylow,Laylow,63.0,"['french rap', 'moroccan rap']",0LnhY2fzptb0QEs5Q5gM7S,1666.0,48.0,2026-01-09
-Luther,Luther,58.0,"['french rap', 'new wave']",712cOCN3mpraX2UOgUvdHW,1172.0,57.0,2026-01-09
-Gims,GIMS,83.0,"['french rap', 'french r&b', 'french pop', 'pop urbaine']",0GOx72r5AAEKRGQFn3xqXK,1382.0,80.0,2026-01-09
-Naps,NAPS,7.0,['pop urbaine'],0KEYxq41fvHXQz0DcOUK3M,2754.0,77.0,2026-01-09
-Morad,Morad,23.0,['french rap'],2s1CEk8nyQk8gdpvVddRB0,1245.0,94.0,2026-01-09
-Theodora,Theodora,77.0,"['shatta', 'french rap']",3PpJbrAbphauEun8Xf9tD2,1354.0,53.0,2026-01-09
-Leto,Leto,71.0,"['french rap', 'pop urbaine']",6HCBnyTBSLdb3TFn2ayulY,2142.0,39.0,2026-01-09
-63OG,63OG,54.0,['french rap'],1wRx48q25O8HPDTyNOUQ2k,1054.0,87.0,2026-01-09
-Rnboi,RnBoi,73.0,"['french r&b', 'french rap']",4yPFe6ZiSjH5mgjDwiYZgc,2594.0,68.0,2026-01-09
-R2,R2,70.0,['french rap'],2D8Vb8JwQhndC6H6heA1kD,2333.0,61.0,2026-01-09
-Genezio,Genezio,69.0,"['french rap', 'french r&b', 'shatta']",0PcU18DNfkn3pmbjy5yMFz,2178.0,61.0,2026-01-09
-Guy2bezbar,Guy2Bezbar,70.0,"['french rap', 'pop urbaine']",07h4CCFmlXkwx0g4PL5Uuh,41565.0,51.0,2026-01-09
-Tiakola,Tiakola,75.0,"['french rap', 'pop urbaine', 'french r&b']",3vUMXQ9kPnZAQkMkZZ7Hfh,1571.0,45.0,2026-01-09
-Rsko,Rsko,70.0,"['french rap', 'french r&b', 'pop urbaine']",3L774tiJRvPmAS90pOLB44,2607.0,65.0,2026-01-09
-13 BLOCK,13 Block,53.0,"['french rap', 'pop urbaine']",7rTPCNINGzMp3Hc8Xqht5Z,13825.0,36.0,2026-01-09
-So la lune,So La Lune,58.0,['french rap'],4ZW7BptOWzjNFLEqRiNCT7,1734.0,80.0,2026-01-09
-L2B,L2B,75.0,"['french rap', 'french r&b', 'shatta']",4hYxvgmTzS29XAXlo5adgM,2123.0,71.0,2026-01-09
-Moji x Sboy,Moji x Sboy,55.0,['french rap'],4J3vhZNPel1Tyj2GHsXi6i,1141.0,59.0,2026-01-09
-La Rvfleuse,La Rvfleuze,69.0,['french rap'],6k9F0oaxCXxbdTFDTdZihN,1591.0,32.0,2026-01-09
-La mano,La Mano 1.9,74.0,['french rap'],78iJ2FMbYAFY3djO4PbWZi,1297.0,61.0,2026-01-09
-Ronisia,Ronisia,62.0,"['french r&b', 'pop urbaine', 'zouk', 'kompa']",4krMq8pXkLVTGplpYgHlnV,1558.0,66.0,2026-01-09
-Gazo,Gazo,73.0,"['french rap', 'french r&b', 'pop urbaine', 'drill']",5gqmbbfjcikQBzPB5Hv13I,1128.0,49.0,2026-01-09
-Werenoi,Werenoi,80.0,['french rap'],3YBJLs7RqR0aPGBgU27nDh,3301.0,70.0,2026-01-09
-SDM,SDM,25.0,['french rap'],0uoFQ6oWGOzgRmSUAjfmTB,3396.0,47.0,2026-01-09
-Dosseh,Dosseh,55.0,"['french rap', 'pop urbaine']",3b5bg1k6N9u31OtzSfK2dP,4191.0,67.0,2026-01-09
-Dinos,Dinos,65.0,['french rap'],1QPdp5duV6lV4XINCzjwQ2,1177.0,76.0,2026-01-09
-Bu$hi,Bu$hi,22.0,[],28K0PxiLqAe67wg2pmjcnQ,1012.0,15.0,2026-01-09
-Maes,Maes,73.0,"['french rap', 'pop urbaine']",6L34dW6SKMSDaGIfYDU19j,2422.0,32.0,2026-01-09
-Isha,ISHA,59.0,['french rap'],0dSh0CIa0HPd9kJmJSmGQo,1825.0,86.0,2026-01-09
-Nahir,Nahir,53.0,['french rap'],3x3gsBtmPOSQVqdBzO7N5E,1736.0,79.0,2026-01-09
-Oboy,Oboy,16.0,"['uk drill', 'drill']",3SnbXN9dy4tG6v32J3SUFd,1517.0,52.0,2026-01-09
-Gradur,Gradur,65.0,"['french rap', 'pop urbaine', 'french r&b']",2tcoLkA9Hexz70Kuc1NTUl,92643.0,62.0,2026-01-09
-Bekar,Bekar,62.0,['french rap'],6wjkiUBMMYSIx5UBTp7eKC,1937.0,91.0,2026-01-09
-Zkr,Zkr,62.0,['french rap'],2yJ6lsLqG06r9bckSTQRt4,1753.0,36.0,2026-01-09
-Limsa,Limsa,18.0,[],5QrpCbje4qeQPc6Z1i0sBh,1944.0,84.0,2026-01-09
-Niska,Niska,74.0,"['french rap', 'pop urbaine', 'french r&b']",7CUFPNi1TU8RowpnFRSsZV,3178.0,77.0,2026-01-09
-Djadja & Dinaz,Djadja & Dinaz,70.0,"['french rap', 'pop urbaine']",5hREZP0zTQbTLkZ2M8RS4v,2041.0,74.0,2026-01-09
-HOUDI,HOUDI,57.0,['french rap'],0E9vzecg75Thz2ekrGIaF6,2272.0,95.0,2026-01-09
-Kaaris,Kaaris,65.0,"['french rap', 'pop urbaine']",1ntQKIMIgESKpKoNXVBvQg,3243.0,87.0,2026-01-09
-Zola,Zola,63.0,"['french rap', 'french r&b']",54kCbQZaZWHnwwj9VP2hn4,1194.0,45.0,2026-01-09
-Favé,Favé,66.0,['french rap'],20JMfmzDb5cjHxEoMXXMyY,41774.0,51.0,2026-01-09
-Booba,Booba,3.0,[],4VdhtZGHNQTRoutR46CIWT,1440.0,71.0,2026-01-09
-Freeze Corleone,Freeze corleone,64.0,"['french rap', 'drill']",76Pl0epAMXVXJspaSuz8im,1559.0,49.0,2026-01-09
+Jul,Jul,84.0,"['french rap', 'pop urbaine']",3IW7ScrzXmPvZhB27hmfgy,1727.0,79.0,2026-01-10
+Nekfeu,Nekfeu,68.0,['french rap'],4LXBc13z5EWsc5N32bLxfH,1219.0,69.0,2026-01-10
+Josman,Josman,71.0,['french rap'],6dbdXbyAWk2qx8Qttw0knR,2470.0,61.0,2026-01-10
+Ninho,Ninho,81.0,"['french rap', 'pop urbaine']",6Te49r3A6f5BiIgBRxH7FH,2203.0,77.0,2026-01-10
+Damso,Damso,77.0,"['french rap', 'pop urbaine', 'french r&b']",2UwqpfQtNuhBwviIC0f2ie,1074.0,59.0,2026-01-10
+Rounhaa,Rounhaa,48.0,"['french rap', 'new wave']",6jFcJYXzABu7Us9iwENUJe,1933.0,63.0,2026-01-10
+Jolagreen,Jolagreen23,60.0,['french rap'],2jZ78PLlC1PuYKQ2bVwRvz,2124.0,69.0,2026-01-10
+SCH,SCH,74.0,"['french rap', 'pop urbaine']",2kXKa3aAFngGz2P4GjG5w2,1439.0,84.0,2026-01-10
+Yvnnis,Yvnnis,55.0,"['french rap', 'new wave']",2Av0IgTSSDYLJNajJrQwyb,1485.0,81.0,2026-01-10
+Zamdane,Zamdane,63.0,['french rap'],5CtPAGoxpJ4yLJLx6CSrO8,2163.0,69.0,2026-01-10
+J9ueve,J9ueve,52.0,['french rap'],4fj5OWrMmlCbrc3PocAcl1,1576.0,79.0,2026-01-10
+TIF,TIF,60.0,"['french rap', 'moroccan rap', 'moroccan pop']",2NgTPluNpfsoYZnoeU2VsH,2352.0,67.0,2026-01-10
+Vacra,Vacra,65.0,"['french rap', 'french r&b', 'pop urbaine']",5OLkn5GT6EcMuJzjwgvQnu,3540.0,83.0,2026-01-10
+PNL,PNL,76.0,"['french rap', 'pop urbaine']",3NH8t45zOTqzlZgBvZRjvB,1230.0,80.0,2026-01-10
+Ino_Casablanca,Ino Casablanca,55.0,['french rap'],5blvB6N3OACeH0gJL9BRqf,4439.0,68.0,2026-01-10
+La_fève,La Fève,59.0,"['french rap', 'new wave']",2sBKOwN0fSjx39VtL2WpjJ,1053.0,39.0,2026-01-10
+PLK,PLK,74.0,"['french rap', 'pop urbaine']",3DCWeG2J1fZeu0Oe6i5Q6m,2943.0,69.0,2026-01-10
+Timar,Timar,71.0,['french rap'],4BUeuxQIWI69tEYuvzbv6D,3345.0,81.0,2026-01-10
+Hamza,Hamza,74.0,"['french rap', 'pop urbaine', 'french r&b']",5gs4Sm2WQUkcGeikMcVHbh,1770.0,61.0,2026-01-10
+Huntrill,Huntrill,55.0,['french rap'],1Nm9adUt6D5iuhRgirlgF2,1129.0,73.0,2026-01-10
+Jungle_Jack,Jungle Jack,53.0,['french rap'],36HOtWiV4nn0luNGSn2xAT,1432.0,75.0,2026-01-10
+Alpha_Wann,Alpha Wann,58.0,['french rap'],7yeFMUrYTY5cAZx0GKXnti,2259.0,69.0,2026-01-10
+Laylow,Laylow,63.0,"['french rap', 'moroccan rap']",0LnhY2fzptb0QEs5Q5gM7S,1791.0,52.0,2026-01-10
+Luther,Luther,58.0,"['french rap', 'new wave']",712cOCN3mpraX2UOgUvdHW,1329.0,60.0,2026-01-10
+Gims,GIMS,83.0,"['french rap', 'french r&b', 'french pop', 'pop urbaine']",0GOx72r5AAEKRGQFn3xqXK,1428.0,79.0,2026-01-10
+Naps,NAPS,7.0,['pop urbaine'],0KEYxq41fvHXQz0DcOUK3M,2749.0,80.0,2026-01-10
+Morad,Morad,23.0,['french rap'],2s1CEk8nyQk8gdpvVddRB0,1157.0,83.0,2026-01-10
+Theodora,Theodora,77.0,"['shatta', 'french rap']",3PpJbrAbphauEun8Xf9tD2,1385.0,52.0,2026-01-10
+Leto,Leto,71.0,"['french rap', 'pop urbaine']",6HCBnyTBSLdb3TFn2ayulY,1366.0,35.0,2026-01-10
+63OG,63OG,54.0,['french rap'],1wRx48q25O8HPDTyNOUQ2k,1058.0,87.0,2026-01-10
+Rnboi,RnBoi,73.0,"['french r&b', 'french rap']",4yPFe6ZiSjH5mgjDwiYZgc,3337.0,69.0,2026-01-10
+R2,R2,70.0,['french rap'],2D8Vb8JwQhndC6H6heA1kD,2986.0,74.0,2026-01-10
+Genezio,Genezio,69.0,"['french rap', 'french r&b', 'shatta']",0PcU18DNfkn3pmbjy5yMFz,2237.0,64.0,2026-01-10
+Guy2bezbar,Guy2Bezbar,70.0,"['french rap', 'pop urbaine']",07h4CCFmlXkwx0g4PL5Uuh,41082.0,52.0,2026-01-10
+Tiakola,Tiakola,75.0,"['french rap', 'pop urbaine', 'french r&b']",3vUMXQ9kPnZAQkMkZZ7Hfh,2907.0,43.0,2026-01-10
+Rsko,Rsko,70.0,"['french rap', 'french r&b', 'pop urbaine']",3L774tiJRvPmAS90pOLB44,2737.0,65.0,2026-01-10
+13 BLOCK,13 Block,53.0,"['french rap', 'pop urbaine']",7rTPCNINGzMp3Hc8Xqht5Z,13115.0,40.0,2026-01-10
+So la lune,So La Lune,58.0,['french rap'],4ZW7BptOWzjNFLEqRiNCT7,1781.0,77.0,2026-01-10
+L2B,L2B,75.0,"['french rap', 'french r&b', 'shatta']",4hYxvgmTzS29XAXlo5adgM,2162.0,70.0,2026-01-10
+Moji x Sboy,Moji x Sboy,55.0,['french rap'],4J3vhZNPel1Tyj2GHsXi6i,1140.0,60.0,2026-01-10
+La Rvfleuse,La Rvfleuze,68.0,['french rap'],6k9F0oaxCXxbdTFDTdZihN,1579.0,34.0,2026-01-10
+La mano,La Mano 1.9,74.0,['french rap'],78iJ2FMbYAFY3djO4PbWZi,1400.0,58.0,2026-01-10
+Ronisia,Ronisia,62.0,"['french r&b', 'pop urbaine', 'zouk', 'kompa']",4krMq8pXkLVTGplpYgHlnV,1573.0,69.0,2026-01-10
+Gazo,Gazo,73.0,"['french rap', 'french r&b', 'pop urbaine', 'drill']",5gqmbbfjcikQBzPB5Hv13I,1233.0,48.0,2026-01-10
+Werenoi,Werenoi,80.0,['french rap'],3YBJLs7RqR0aPGBgU27nDh,3632.0,69.0,2026-01-10
+SDM,SDM,25.0,['french rap'],0uoFQ6oWGOzgRmSUAjfmTB,3380.0,48.0,2026-01-10
+Dosseh,Dosseh,55.0,"['french rap', 'pop urbaine']",3b5bg1k6N9u31OtzSfK2dP,4146.0,68.0,2026-01-10
+Dinos,Dinos,65.0,['french rap'],1QPdp5duV6lV4XINCzjwQ2,1369.0,80.0,2026-01-10
+Bu$hi,Bu$hi,22.0,[],28K0PxiLqAe67wg2pmjcnQ,1012.0,15.0,2026-01-10
+Maes,Maes,73.0,"['french rap', 'pop urbaine']",6L34dW6SKMSDaGIfYDU19j,2100.0,32.0,2026-01-10
+Isha,ISHA,59.0,['french rap'],0dSh0CIa0HPd9kJmJSmGQo,1834.0,86.0,2026-01-10
+Nahir,Nahir,53.0,['french rap'],3x3gsBtmPOSQVqdBzO7N5E,1753.0,77.0,2026-01-10
+Oboy,Oboy,16.0,"['uk drill', 'drill']",3SnbXN9dy4tG6v32J3SUFd,1805.0,48.0,2026-01-10
+Gradur,Gradur,65.0,"['french rap', 'pop urbaine', 'french r&b']",2tcoLkA9Hexz70Kuc1NTUl,99022.0,58.0,2026-01-10
+Bekar,Bekar,62.0,['french rap'],6wjkiUBMMYSIx5UBTp7eKC,1942.0,91.0,2026-01-10
+Zkr,Zkr,62.0,['french rap'],2yJ6lsLqG06r9bckSTQRt4,2701.0,39.0,2026-01-10
+Limsa,Limsa,17.0,[],5QrpCbje4qeQPc6Z1i0sBh,1945.0,85.0,2026-01-10
+Niska,Niska,74.0,"['french rap', 'pop urbaine', 'french r&b']",7CUFPNi1TU8RowpnFRSsZV,3123.0,80.0,2026-01-10
+Djadja & Dinaz,Djadja & Dinaz,70.0,"['french rap', 'pop urbaine']",5hREZP0zTQbTLkZ2M8RS4v,1421.0,73.0,2026-01-10
+HOUDI,HOUDI,57.0,['french rap'],0E9vzecg75Thz2ekrGIaF6,2264.0,96.0,2026-01-10
+Kaaris,Kaaris,65.0,"['french rap', 'pop urbaine']",1ntQKIMIgESKpKoNXVBvQg,3157.0,88.0,2026-01-10
+Zola,Zola,63.0,"['french rap', 'french r&b']",54kCbQZaZWHnwwj9VP2hn4,1239.0,47.0,2026-01-10
+Favé,Favé,66.0,['french rap'],20JMfmzDb5cjHxEoMXXMyY,6920.0,49.0,2026-01-10
+Booba,Booba,73.0,"['french rap', 'french r&b', 'pop urbaine']",58wXmynHaAWI5hwlPZP3qL,1426.0,72.0,2026-01-10
+Freeze Corleone,Freeze corleone,64.0,"['french rap', 'drill']",76Pl0epAMXVXJspaSuz8im,1489.0,52.0,2026-01-10
+Khali,Khali,50.0,"['french rap', 'new wave']",0rqQfmTWtmxzlrNmnruQXS,2095.0,59.0,2026-01-10
+Sofiane Pamart,Sofiane Pamart,67.0,['french rap'],4RB2EEsmLhQTOSVQQpDzNg,4567.0,63.0,2026-01-10
+Disiz,disiz,72.0,['french rap'],7rz6ZZErn5YFDteXKhyf3g,1900.0,84.0,2026-01-10
+Luidji,Luidji,63.0,"['french rap', 'french r&b']",3bRGJQd7b4lE3ZAEMfOXJp,2771.0,39.0,2026-01-10
+Mairo,Mairo,48.0,['french rap'],1BosUoykMJzWNTXM4Qfblg,1435.0,68.0,2026-01-10
+Wallace Cleaver,Wallace Cleaver,54.0,['french rap'],49qUD3ZuoOWEXwLgDwa3Eg,1915.0,94.0,2026-01-10
+Femtogo,FEMTOGO,64.0,"['french rap', 'hyperpop', 'new wave']",0VphuTgDCzWuJ9Cs3kkqVL,1489.0,89.0,2026-01-10
+Saïf,Saïf,68.0,['french rap'],1bbr3P3o6BGIdvTWKb6rxL,8780.0,61.0,2026-01-10
+Ben plg,BEN plg,55.0,['french rap'],4Q4yUu2v7zN40G0LtsnY98,1499.0,84.0,2026-01-10
+Keeqaid,Keeqaid,52.0,['french rap'],7oqEDe1XrV6BFP26onyUMo,1037.0,68.0,2026-01-10
+Lesram,Lesram,56.0,['french rap'],0UeKDbiaApyP7qKfcmGN03,3088.0,85.0,2026-01-10
+Meryl,Meryl,65.0,"['shatta', 'zouk', 'kompa', 'dancehall']",1AT8NKdQOU0EVPu6ehN4NA,20698.0,59.0,2026-01-10
+Maureen,Maureen,63.0,"['shatta', 'dancehall', 'zouk', 'kompa']",2r78U7GOo9XMOVbpFkXtYD,1448.0,33.0,2026-01-10
+JRK19,JRK 19,62.0,['french rap'],081t7kkrq7re69pk4vTurz,1023.0,22.0,2026-01-10
+Sasso,Sasso,14.0,"['jazz funk', 'acid jazz']",0g7TDVM3JEoQ3LoQUqV8rj,1250.0,56.0,2026-01-10

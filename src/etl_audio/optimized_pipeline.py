@@ -309,7 +309,7 @@ if __name__ == "__main__":
     pipeline = DataPipeline()
     
     # List of artists to process
-    artists_to_process = ["Freeze Corleone"]
+    artists_to_process = ["Disiz"]
     
     for artist in artists_to_process:
         # Lower threshold to ensure we get results for smaller artists/queries
