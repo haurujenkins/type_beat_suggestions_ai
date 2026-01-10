@@ -1,11 +1,13 @@
 import joblib
 import os
 import sys
+import gc
 
 def load_ai_models(models_dir="models"):
     """
     Charge les 3 fichiers nécessaires au modèle (Modèle, Scaler, Encoder).
     Gère les chemins relatifs pour Docker.
+    Optimisation Mémoire : Garbage Collection immédiat.
     """
     print(f"🔄 Chargement des modèles depuis : {models_dir}...")
     
@@ -24,6 +26,9 @@ def load_ai_models(models_dir="models"):
 
         # Récupération des features attendues (si disponible dans le scaler)
         expected_features = getattr(scaler, 'feature_names_in_', None)
+
+        # Libération immédiate de la mémoire temporaire
+        gc.collect()
 
         print("✅ Modèles chargés avec succès.")
         return model, scaler, encoder, expected_features

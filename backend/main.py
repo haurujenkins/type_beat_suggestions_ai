@@ -3,18 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 import numpy as np
-import pandas as pd
 import librosa
+import csv
+import gc
 from model_loader import load_ai_models
 
-# --- CONFIGURATION ---
-app = FastAPI(title="Type Beat AI API")
+# --- CONFIGURATION OPTIMISÉE ---
+app = FastAPI(title="Type Beat AI API (Light)")
 
-# Configuration CORS (CRITIQUE pour que le frontend Vercel puisse parler au backend)
+# Configuration CORS
 origins = [
-    "http://localhost:3000",          # Pour le dev local
-    "https://votre-app.vercel.app",   # Remplacez par votre URL Vercel réelle
-    "*"                               # À restreindre en production si possible
+    "http://localhost:3000",
+    "https://votre-app.vercel.app",
+    "*"
 ]
 
 app.add_middleware(
@@ -25,15 +26,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CHARGEMENT DU MODÈLE (Au démarrage) ---
-# On charge une seule fois pour éviter de le refaire à chaque requête
+# --- CHARGEMENT DU MODÈLE (GLOBAL & OPTIMISÉ) ---
 MODEL, SCALER, ENCODER, EXPECTED_FEATURES = load_ai_models("models")
+# Force un clean immédiat après le chargement lourd
+gc.collect()
+
+# --- CACHE LÉGER POUR LES MÉTHADONNÉES ---
+METADATA_CACHE = {}
+
+def load_artist_metadata_light():
+    """Charge artist_popularity.csv sans Pandas (csv natif)."""
+    global METADATA_CACHE
+    if METADATA_CACHE:
+        return METADATA_CACHE
+        
+    csv_path = "data/artist_popularity.csv"
+    # Fallback si le dossier data n'est pas à la racine du backend
+    if not os.path.exists(csv_path):
+        # Essayer de chercher 'dataset_audio.csv' si c'est ce que l'utilisateur voulait
+        # Mais on privilégie artist_popularity pour la légèreté
+        return {}
+
+    try:
+        with open(csv_path, mode='r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # On ne garde que l'essentiel pour économiser la RAM
+                try:
+                    search_name = row.get('search_name', 'Unknown')
+                    views = float(row.get('youtube_avg_views', 0))
+                    METADATA_CACHE[search_name] = {'views': views}
+                except ValueError:
+                    continue
+        print(f"✅ Metadata chargées : {len(METADATA_CACHE)} artistes.")
+        return METADATA_CACHE
+    except Exception as e:
+        print(f"⚠️ Erreur chargement metadata : {e}")
+        return {}
+
+# Chargeons les metadata au démarrage
+load_artist_metadata_light()
+
 
 # --- FONCTIONS UTILITAIRES ---
-def extract_visual_features(file_path):
+def extract_features_light(file_path):
     """
-    Réplique exacte de la logique d'extraction utilisée dans l'app Streamlit
-    pour garantir la cohérence des prédictions.
+    Extraction sans Pandas. Retourne une liste de dictionnaires.
     """
     SAMPLE_RATE = 22050
     DURATION_SLICE = 30
@@ -43,22 +81,22 @@ def extract_visual_features(file_path):
         total_samples = len(y_full)
         samples_per_slice = sr * DURATION_SLICE
         
-        # Découpage (Slicing)
+        # Slicing efficace (Générateur ou liste simple)
+        slices = []
         if total_samples < samples_per_slice:
-            y_slices = [np.pad(y_full, (0, samples_per_slice - total_samples), 'constant')]
+            slices = [np.pad(y_full, (0, samples_per_slice - total_samples), 'constant')]
         else:
-            y_slices = []
             for i in range(0, total_samples, samples_per_slice):
                 segment = y_full[i : i + samples_per_slice]
-                if len(segment) >= (sr * 10): # Ignorer segments trop courts (<10s)
+                if len(segment) >= (sr * 10): 
                     if len(segment) < samples_per_slice:
                         segment = np.pad(segment, (0, samples_per_slice - len(segment)), 'constant')
-                    y_slices.append(segment)
+                    slices.append(segment)
         
-        all_features_list = []
+        all_features = []
         
-        for y in y_slices:
-            # Extraction
+        for y in slices:
+            # Extraction pure
             tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
             rms = librosa.feature.rms(y=y)
             zcr = librosa.feature.zero_crossing_rate(y)
@@ -69,85 +107,117 @@ def extract_visual_features(file_path):
 
             tempo_val = float(tempo.item()) if hasattr(tempo, 'item') else float(tempo)
             
+            # Construction Dict (très léger)
             features = {"tempo": tempo_val}
             
-            # Helper pour cleaner le code
-            for name, data in [("rms", rms), ("zcr", zcr), ("spec_cent", spec_cent), ("spec_roll", spec_roll)]:
-                features[f"{name}_mean"] = np.mean(data)
-                features[f"{name}_var"]  = np.var(data)
+            # Stats basiques
+            features["rms_mean"] = float(np.mean(rms))
+            features["rms_var"] = float(np.var(rms))
+            features["zcr_mean"] = float(np.mean(zcr))
+            features["zcr_var"] = float(np.var(zcr))
+            features["spec_cent_mean"] = float(np.mean(spec_cent))
+            features["spec_cent_var"] = float(np.var(spec_cent))
+            features["spec_roll_mean"] = float(np.mean(spec_roll))
+            features["spec_roll_var"] = float(np.var(spec_roll))
 
             for i in range(13):
-                features[f"mfcc_{i}_mean"] = np.mean(mfccs[i])
-                features[f"mfcc_{i}_var"]  = np.var(mfccs[i])
+                features[f"mfcc_{i}_mean"] = float(np.mean(mfccs[i]))
+                features[f"mfcc_{i}_var"]  = float(np.var(mfccs[i]))
             for i in range(12):
-                features[f"chroma_{i}_mean"] = np.mean(chroma[i])
-                features[f"chroma_{i}_var"]  = np.var(chroma[i])
+                features[f"chroma_{i}_mean"] = float(np.mean(chroma[i]))
+                features[f"chroma_{i}_var"]  = float(np.var(chroma[i]))
                 
-            all_features_list.append(features)
+            all_features.append(features)
             
-        return pd.DataFrame(all_features_list)
+        return all_features # List[Dict]
         
     except Exception as e:
         print(f"Erreur extraction: {e}")
-        return None
+        return []
 
 # --- ROUTES ---
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "message": "Type Beat AI Backend is ready"}
+    return {"status": "online", "mode": "light_optimized"}
 
 @app.post("/predict")
 async def predict_audio(file: UploadFile = File(...)):
     if not file.filename.endswith(('.mp3', '.wav', '.m4a')):
-        raise HTTPException(status_code=400, detail="Format de fichier non supporté.")
+        raise HTTPException(status_code=400, detail="Format non supporté")
 
     temp_filename = f"temp_{file.filename}"
     
     try:
-        # 1. Sauvegarder le fichier temporairement
+        # 1. Sauvegarde streamée pour limiter la RAM
         with open(temp_filename, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # 2. Extraire les features
-        features_df = extract_visual_features(temp_filename)
+        # 2. Extraction
+        features_list_dicts = extract_features_light(temp_filename)
         
-        if features_df is None or features_df.empty:
-            raise HTTPException(status_code=422, detail="Impossible d'extraire les caractéristiques audio.")
+        if not features_list_dicts:
+            raise HTTPException(status_code=422, detail="Échec extraction audio")
 
-        # 3. Préparer les données (Alignement colonnes)
+        # 3. Alignement des colonnes (Critique : Scaler attend un ordre précis)
+        X_input = []
         if EXPECTED_FEATURES is not None:
-            for col in EXPECTED_FEATURES:
-                if col not in features_df.columns:
-                    features_df[col] = 0
-            input_df = features_df[EXPECTED_FEATURES]
+            # Conversion optimisée
+            feature_names = list(EXPECTED_FEATURES)
+            for f_dict in features_list_dicts:
+                # On utilise .get(k, 0.0) pour la robustesse
+                row = [f_dict.get(k, 0.0) for k in feature_names]
+                X_input.append(row)
         else:
-            input_df = features_df
+            # Fallback (Dangereux si l'ordre change, mais mieux que crash)
+            for f_dict in features_list_dicts:
+                X_input.append(list(f_dict.values()))
 
-        # 4. Standardisation
-        X_scaled = SCALER.transform(input_df)
+        # 4. Conversion Numpy (Type float32 pour économiser 50% RAM vs float64)
+        X_np = np.array(X_input, dtype=np.float32)
 
-        # 5. Prédiction (Moyenne des probabilités des slices)
+        # 5. Prédiction
+        # Transform
+        X_scaled = SCALER.transform(X_np)
+        
+        # Predict Proba
         probas = MODEL.predict_proba(X_scaled)
+        
+        # Moyenne
         avg_probas = probas.mean(axis=0)
         
-        # 6. Formatting Result
+        # 6. Mapping Classes
         classes = ENCODER.classes_
-        results = list(zip(classes, avg_probas))
+        results = []
+        for i, class_name in enumerate(classes):
+            results.append((class_name, float(avg_probas[i])))
+            
         results.sort(key=lambda x: x[1], reverse=True)
         
-        top_result = results[0]
-        winner_artist = top_result[0]
-        confidence = float(top_result[1])
-
-        # Top 5 details
+        # 7. Enrichissement avec Metadata (Sans Pandas)
         top_5 = []
+        metadata = load_artist_metadata_light()
+        
         for artist, score in results[:5]:
-            top_5.append({"artist": artist, "score": float(score)})
+            meta = metadata.get(artist, {})
+            top_5.append({
+                "artist": artist,
+                "score": score,
+                "views": meta.get('views', 0)
+            })
+
+        top_result = top_5[0]
+
+        # Clean Memory
+        del X_input
+        del X_np
+        del X_scaled
+        del probas
+        gc.collect()
 
         return {
-            "prediction": winner_artist,
-            "confidence": confidence,
+            "prediction": top_result["artist"],
+            "confidence": top_result["score"],
             "details": top_5
         }
 
@@ -155,6 +225,6 @@ async def predict_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
-        # Nettoyage
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
+        gc.collect()

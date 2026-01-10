@@ -2,7 +2,6 @@ fastapi
 uvicorn
 python-multipart
 numpy<2.0.0
-pandas
 librosa
 scikit-learn==1.7.2
 joblib
