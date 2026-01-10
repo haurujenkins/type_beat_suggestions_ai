@@ -37,11 +37,12 @@ def get_audio_content_optimized(audio_path, analyze_duration=30):
     OPTIMISATION I/O:
     - Charge UNE SEULE FOIS un buffer de 30s situé au milieu du fichier.
     - Utilise res_type='linear' pour une vitesse maximale.
+    - Fallback: Si échec (MP3 VBR, metadata), charge le début du fichier.
     """
+    sr = 22050
     try:
-        # 1. Récupérer durée totale (très rapide, lecture header seulement)
+        # 1. Tentative Optimisée : Duration -> Offset -> Load Slice
         total_duration = librosa.get_duration(path=audio_path)
-        sr = 22050
         
         # 2. Calculer l'offset pour viser le milieu
         # Si le fichier est plus court que 30s, offset = 0
@@ -64,14 +65,33 @@ def get_audio_content_optimized(audio_path, analyze_duration=30):
         
         # Padding si trop court
         target_samples = int(analyze_duration * sr)
-        if len(y) < target_samples and total_duration < analyze_duration:
-             y = np.pad(y, (0, target_samples - len(y)), 'constant')
+        if len(y) < target_samples:
+             y = np.pad(y, (0, max(0, target_samples - len(y))), 'constant')
              
         return y, sr
     
     except Exception as e:
-        print(f"⚠️ Erreur chargement optimisé: {e}")
-        return None, None
+        print(f"⚠️ Erreur chargement optimisé ({e}). Tentative de fallback (début du fichier)...")
+        try:
+            # 4. Fallback : Chargement simple des 30 premières secondes
+            # Parfois get_duration/offset fail sur certains MP3 (VBR) ou headers incomplets.
+            # On charge depuis le début (offset=0 par défaut), c'est plus robuste.
+            y, _ = librosa.load(
+                audio_path,
+                sr=sr,
+                mono=True,
+                duration=analyze_duration,
+                res_type='linear'
+            )
+            # Padding fallback
+            target_samples = int(analyze_duration * sr)
+            if len(y) < target_samples:
+                y = np.pad(y, (0, max(0, target_samples - len(y))), 'constant')
+            
+            return y, sr
+        except Exception as e2:
+            print(f"❌ Echec total chargement audio: {e2}")
+            return None, None
 
 def extract_features(y, sr, precomputed_tempo=None):
     """
