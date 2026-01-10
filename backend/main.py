@@ -6,6 +6,7 @@ import numpy as np
 import librosa
 import csv
 import gc
+import ctypes
 from model_loader import load_ai_models
 
 # --- CONFIGURATION OPTIMISÉE ---
@@ -71,71 +72,59 @@ load_artist_metadata_light()
 # --- FONCTIONS UTILITAIRES ---
 def extract_features_light(file_path):
     """
-    Extraction STREAMÉE (Memory Optimized).
-    Ne charge JAMAIS le fichier entier en mémoire. 
-    Charge morceau par morceau (30s) avec librosa.load(offset, duration).
+    Extraction ULTRA-LÉGÈRE (Memory Optimized).
+    Ne charge que les 30 premières secondes une seule fois.
     """
     SAMPLE_RATE = 22050
     DURATION_SLICE = 30
     
     try:
-        # 1. Obtenir la durée totale sans charger le son
-        total_duration = librosa.get_duration(path=file_path)
+        # --- CHARGEMENT UNIQUE ET LIMITÉ ---
+        # On charge SEULEMENT 30 secondes, et on force le sample rate
+        y, sr = librosa.load(file_path, sr=SAMPLE_RATE, duration=DURATION_SLICE)
         
-        all_features = []
+        # Ignorer si trop court (<5s)
+        if len(y) < (sr * 5):
+            return []
+            
+        # Padding si < 30s
+        target_length = sr * DURATION_SLICE
+        if len(y) < target_length:
+            y = np.pad(y, (0, target_length - len(y)), 'constant')
         
-        # 2. Itérer par blocs de 30 secondes
-        for offset in range(0, int(total_duration), DURATION_SLICE):
-            
-            # --- CHARGEMENT PARTIEL (CRITIQUE POUR RAM) ---
-            # On ne charge que 30 secondes en mémoire
-            y, sr = librosa.load(file_path, sr=SAMPLE_RATE, offset=offset, duration=DURATION_SLICE)
-            
-            # Ignorer si trop court (<5s pour être sûr)
-            if len(y) < (sr * 5):
-                continue
-                
-            # Padding si < 30s
-            target_length = sr * DURATION_SLICE
-            if len(y) < target_length:
-                y = np.pad(y, (0, target_length - len(y)), 'constant')
-            
-            # --- EXTRACTION ---
-            tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-            rms = librosa.feature.rms(y=y)
-            zcr = librosa.feature.zero_crossing_rate(y)
-            spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
-            spec_roll = librosa.feature.spectral_rolloff(y=y, sr=sr)
-            mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-            chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+        # --- EXTRACTION ---
+        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+        rms = librosa.feature.rms(y=y)
+        zcr = librosa.feature.zero_crossing_rate(y)
+        spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
+        spec_roll = librosa.feature.spectral_rolloff(y=y, sr=sr)
+        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        chroma = librosa.feature.chroma_stft(y=y, sr=sr)
 
-            tempo_val = float(tempo.item()) if hasattr(tempo, 'item') else float(tempo)
-            
-            features = {"tempo": tempo_val}
-            
-            features["rms_mean"] = float(np.mean(rms))
-            features["rms_var"] = float(np.var(rms))
-            features["zcr_mean"] = float(np.mean(zcr))
-            features["zcr_var"] = float(np.var(zcr))
-            features["spec_cent_mean"] = float(np.mean(spec_cent))
-            features["spec_cent_var"] = float(np.var(spec_cent))
-            features["spec_roll_mean"] = float(np.mean(spec_roll))
-            features["spec_roll_var"] = float(np.var(spec_roll))
+        tempo_val = float(tempo.item()) if hasattr(tempo, 'item') else float(tempo)
+        
+        features = {"tempo": tempo_val}
+        
+        features["rms_mean"] = float(np.mean(rms))
+        features["rms_var"] = float(np.var(rms))
+        features["zcr_mean"] = float(np.mean(zcr))
+        features["zcr_var"] = float(np.var(zcr))
+        features["spec_cent_mean"] = float(np.mean(spec_cent))
+        features["spec_cent_var"] = float(np.var(spec_cent))
+        features["spec_roll_mean"] = float(np.mean(spec_roll))
+        features["spec_roll_var"] = float(np.var(spec_roll))
 
-            for i in range(13):
-                features[f"mfcc_{i}_mean"] = float(np.mean(mfccs[i]))
-                features[f"mfcc_{i}_var"]  = float(np.var(mfccs[i]))
-            for i in range(12):
-                features[f"chroma_{i}_mean"] = float(np.mean(chroma[i]))
-                features[f"chroma_{i}_var"]  = float(np.var(chroma[i]))
-                
-            all_features.append(features)
+        for i in range(13):
+            features[f"mfcc_{i}_mean"] = float(np.mean(mfccs[i]))
+            features[f"mfcc_{i}_var"]  = float(np.var(mfccs[i]))
+        for i in range(12):
+            features[f"chroma_{i}_mean"] = float(np.mean(chroma[i]))
+            features[f"chroma_{i}_var"]  = float(np.var(chroma[i]))
             
-            # Libérer explicitement la mémoire du fragment audio
-            del y
-            del rms, zcr, spec_cent, spec_roll, mfccs, chroma
-            
-        return all_features # List[Dict]
+        # Libération explicite
+        del y, rms, zcr, spec_cent, spec_roll, mfccs, chroma
+        
+        return [features] # Single dict in list
         
     except Exception as e:
         print(f"Erreur extraction: {e}")
@@ -234,3 +223,7 @@ async def predict_audio(file: UploadFile = File(...)):
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
         gc.collect()
+        try:
+            ctypes.CDLL('libc.so.6').malloc_trim(0)
+        except:
+            pass

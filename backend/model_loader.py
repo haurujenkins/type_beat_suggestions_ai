@@ -2,12 +2,13 @@ import joblib
 import os
 import sys
 import gc
+import ctypes
 
 def load_ai_models(models_dir="models"):
     """
     Charge les 3 fichiers nécessaires au modèle (Modèle, Scaler, Encoder).
     Gère les chemins relatifs pour Docker.
-    Optimisation Mémoire : Garbage Collection immédiat.
+    Optimisation Mémoire : Garbage Collection immédiat + malloc_trim.
     """
     print(f"🔄 Chargement des modèles depuis : {models_dir}...")
     
@@ -15,20 +16,24 @@ def load_ai_models(models_dir="models"):
         model_path = os.path.join(models_dir, "type_beat_model.pkl")
         scaler_path = os.path.join(models_dir, "scaler.pkl")
         encoder_path = os.path.join(models_dir, "encoder.pkl")
-
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Fichier modèle introuvable: {model_path}")
-
-        # Chargement avec joblib en mode mmap pour réduire l'empreinte RAM
-        # Cela garde le fichier sur le disque et ne charge les pages qu'à la demande
+        
+        # --- OPTIMISATION MMAP (Lecture depuis disque) ---
         model = joblib.load(model_path, mmap_mode='r')
         scaler = joblib.load(scaler_path, mmap_mode='r')
-        encoder = joblib.load(encoder_path) # Encodeur est petit, pas de mmap nécessaire
+        encoder = joblib.load(encoder_path)
 
         # Récupération des features attendues (si disponible dans le scaler)
         expected_features = getattr(scaler, 'feature_names_in_', None)
 
-        # Libération immédiate de la mémoire temporaire
+        # FORCE CLEAN SYSTEM MEMORY (Linux/Render only)
+        gc.collect()
+        try:
+            ctypes.CDLL('libc.so.6').malloc_trim(0)
+        except:
+            pass # Non-Linux OS
+
+        print("✅ Modèles chargés avec succès.")
+        return model, scaler, encoder, expected_features
         gc.collect()
 
         print("✅ Modèles chargés avec succès.")
