@@ -6,6 +6,18 @@
 __pycache__/
 *.pyc
 
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.DS_Store
+
+# Backend
+backend/__pycache__/
+backend/venv/
+backend/.venv/
+backend/.DS_Store
+
 # Local Data (Ignored)
 data/raw_audio/
 data/dataset_audio.csv
