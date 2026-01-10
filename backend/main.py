@@ -34,36 +34,57 @@ FEATURE_COLUMNS = []
 
 def get_audio_slices(audio_path, target_duration=15, n_slices=3):
     """
-    OPTIMISATION RENDER (FREE TIER):
-    - Réduit duration à 15s (suffisant pour tempo/timbre).
-    - Réduit n_slices à 3 (Intro, Verse, Outro approx).
-    - Utilise res_type='kaiser_fast' pour le loading.
+    OPTIMISATION MAXIMALE RENDER:
+    - Ne charge PAS tout le fichier audio.
+    - Lit uniquement les metadata pour la durée.
+    - Charge uniquement 3 petits bouts de 15s.
     """
-    # 1. Charger l'audio complet (kaiser_fast est beaucoup plus rapide)
-    y, sr = librosa.load(audio_path, sr=22050, mono=True, res_type='kaiser_fast')
-    
-    total_samples = len(y)
-    target_samples = target_duration * sr
-    
-    segments = []
-
-    # Cas A : Audio court
-    if total_samples < target_samples:
-        padding = target_samples - total_samples
-        y_padded = np.pad(y, (0, padding), 'constant')
-        segments.append(y_padded)
-        return segments, sr
-
-    # Cas B : 3 fenêtres startégiques (10%, 45%, 80%)
-    # Évite de calculer trop de slices
-    positions = [0.1, 0.45, 0.8] 
-    
-    for pos in positions:
-        start = int((total_samples - target_samples) * pos)
-        if start < 0: start = 0
-        end = start + target_samples
+    try:
+        # 1. Obtenir la durée sans charger le fichier (Rapide)
+        total_duration = librosa.get_duration(path=audio_path)
+        sr = 22050
         
-    return segments, sr
+        segments = []
+        
+        # Cas A : Audio trop court (< duréee minimale)
+        if total_duration < target_duration:
+            y, _ = librosa.load(audio_path, sr=sr, mono=True)
+            # Padding
+            target_samples = int(target_duration * sr)
+            if len(y) < target_samples:
+                y = np.pad(y, (0, target_samples - len(y)), 'constant')
+            segments.append(y)
+            return segments, sr
+
+        # Cas B : Audio long -> On saute direct aux bons endroits
+        # Positions relatives : 10% (Intro), 45% (Milieu), 80% (Fin)
+        positions = [0.1, 0.45, 0.8]
+        
+        for pos in positions:
+            # Calcul de l'offset en secondes
+            # On s'assure qu'on ne dépasse pas la fin
+            start_sec = (total_duration - target_duration) * pos
+            if start_sec < 0: start_sec = 0
+            
+            # Chargement partiel chirurgical
+            y_slice, _ = librosa.load(
+                audio_path, 
+                sr=sr, 
+                mono=True, 
+                offset=start_sec, 
+                duration=target_duration,
+                res_type='kaiser_fast'
+            )
+            segments.append(y_slice)
+            
+        return segments, sr
+    
+    except Exception as e:
+        print(f"⚠️ Erreur slicing optimisé: {e}, fallback load complet.")
+        # Fallback méthode bourrin si échec lecture metadata
+        y, sr = librosa.load(audio_path, sr=22050, mono=True)
+        segments.append(y[:int(target_duration*22050)])
+        return segments, sr
 
 def extract_features_from_segment(y, sr):
     """
