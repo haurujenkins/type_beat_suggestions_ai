@@ -13,11 +13,14 @@ def load_ai_models(models_dir="models"):
     print(f"🔄 Chargement des modèles depuis : {models_dir}...")
     
     try:
-        model_path = os.path.join(models_dir, "type_beat_model.pkl")
+        # NOTE IMPORTANTE : On utilise le modèle uncompressed pour permettre le mmap
+        model_name = "model_uncompressed.pkl" 
+        model_path = os.path.join(models_dir, model_name)
         scaler_path = os.path.join(models_dir, "scaler.pkl")
         encoder_path = os.path.join(models_dir, "encoder.pkl")
         
         # --- OPTIMISATION MMAP (Lecture depuis disque) ---
+        # Le fichier fait 1.6 Go mais joblib ne charge que les pages nécessaires
         model = joblib.load(model_path, mmap_mode='r')
         scaler = joblib.load(scaler_path, mmap_mode='r')
         encoder = joblib.load(encoder_path)
