@@ -30,6 +30,9 @@ data/v2_spectrograms/
 # We need these for the App to run!
 !data/artist_popularity.csv
 !data/dataset_audio.csv
+!backend/data/artist_popularity.csv
+!backend/data/dataset_audio.csv
+
 
 
 # Models (Usually ignored, but needed for V1 Vercel/Cloud deployment)
