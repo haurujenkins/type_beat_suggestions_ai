@@ -1,11 +1,11 @@
 # Core App
 streamlit
-numpy
+numpy<2.0.0
 pandas
 
 # Audio & ML
 librosa
-scikit-learn==1.7.2
+scikit-learn
 joblib
 
 # Optional but recommended for file watching locally
