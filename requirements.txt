@@ -10,3 +10,6 @@ joblib
 
 # Optional but recommended for file watching locally
 watchdog
+resampy
+samplerate
+python-multipart
