@@ -6,3 +6,5 @@ librosa
 scikit-learn==1.7.2
 joblib
 watchdog
+pandas
+

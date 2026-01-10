@@ -29,6 +29,8 @@ data/v2_spectrograms/
 # --- WHITELIST (V1 Release) ---
 # We need these for the App to run!
 !data/artist_popularity.csv
+!data/dataset_audio.csv
+
 
 # Models (Usually ignored, but needed for V1 Vercel/Cloud deployment)
 !models/type_beat_model.pkl

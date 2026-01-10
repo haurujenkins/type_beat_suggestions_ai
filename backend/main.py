@@ -1,229 +1,248 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import shutil
-import os
+from contextlib import asynccontextmanager
+import pandas as pd
 import numpy as np
 import librosa
-import csv
+import os
+import shutil
+import tempfile
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import NearestNeighbors
 import gc
-import ctypes
-from model_loader import load_ai_models
 
-# --- CONFIGURATION OPTIMISÉE ---
-app = FastAPI(title="Type Beat AI API (Light)")
+# --- VARIABLES GLOBALES ---
+DATASET_PATH = "data/dataset_audio.csv"
+DF_AUDIO = None
+SCALER = None
+MODEL_KNN = None
+FEATURE_COLUMNS = []
 
-# Configuration CORS
-origins = [
-    "http://localhost:3000",
-    "https://votre-app.vercel.app",
-    "*"
-]
+# --- LIFESPAN (Gestion au démarrage) ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global DF_AUDIO, SCALER, MODEL_KNN, FEATURE_COLUMNS
+    print("🔄 Démarrage de l'API & Entraînement du modèle à la volée...")
+    
+    try:
+        # 1. Charger le CSV
+        # On suppose que le CWD est la racine du projet, donc data/ est accessible
+        # Sinon ajuster le path
+        if not os.path.exists(DATASET_PATH):
+            # Fallback si on est dans le dossier backend
+            if os.path.exists("../data/dataset_audio.csv"):
+                 DATASET_PATH_FIX = "../data/dataset_audio.csv"
+            else:
+                 print(f"⚠️ Warning: Dataset introuvable à {DATASET_PATH}")
+                 DATASET_PATH_FIX = DATASET_PATH
+        else:
+            DATASET_PATH_FIX = DATASET_PATH
+
+        if os.path.exists(DATASET_PATH_FIX):
+            df = pd.read_csv(DATASET_PATH_FIX)
+            print(f"📊 Dataset brut chargé : {df.shape}")
+
+            # 2. Nettoyage et Sélection des Features
+            # On ne garde que les colonnes numériques pertinentes
+            # La consigne est d'utiliser les MOYENNES ('_mean') et le 'tempo'.
+            # On exclut explicitement les variances ('_var') pour correspondre à la logique "light".
+            cols_to_keep = [c for c in df.columns if c == 'tempo' or c.endswith('_mean')]
+            
+            # Filtrer le DF (Exclut filename, label, et les variances)
+            df_features = df[cols_to_keep].copy()
+            
+            # Nettoyage des NaN éventuels
+            df_features = df_features.dropna()
+            
+            # Sauvegarde la liste finale des colonnes pour l'alignement lors de l'inférence
+            FEATURE_COLUMNS = df_features.columns.tolist()
+            print(f"🎯 Features sélectionnées ({len(FEATURE_COLUMNS)}) : {FEATURE_COLUMNS[:5]}...")
+
+            # 3. Entraînement du Scaler
+            SCALER = StandardScaler()
+            X_scaled = SCALER.fit_transform(df_features)
+            
+            # 4. Entraînement du modèle KNN
+            # Metric 'cosine' est souvent meilleure pour l'audio que 'euclidean'
+            MODEL_KNN = NearestNeighbors(n_neighbors=5, metric='cosine', algorithm='brute')
+            MODEL_KNN.fit(X_scaled)
+            
+            # 5. Stockage du 'référentiel' (pour récupérer les infos artistes après prédiction)
+            # On garde le DF original aligné avec X_scaled (attention aux index si dropna)
+            DF_AUDIO = df.loc[df_features.index].reset_index(drop=True)
+            
+            # Nettoyage RAM
+            del df
+            del df_features
+            del X_scaled
+            gc.collect()
+            
+            print("✅ Modèle entraîné et prêt !")
+        else:
+            print("❌ IMPOSSIBLE de charger le dataset. L'API ne pourra pas prédire.")
+        
+    except Exception as e:
+        print(f"❌ Erreur critique au démarrage : {e}")
+        # On ne quitte pas forcément, mais l'API sera dégradée
+    
+    yield
+    
+    # Clean up à l'extinction
+    print("🛑 Arrêt de l'API. Nettoyage mémoire.")
+    del DF_AUDIO
+    del SCALER
+    del MODEL_KNN
+    gc.collect()
+
+# --- APP SETUP ---
+app = FastAPI(title="Type Beat AI API (On-the-fly)", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- CHARGEMENT DU MODÈLE (GLOBAL & OPTIMISÉ) ---
-MODEL, SCALER, ENCODER, EXPECTED_FEATURES = load_ai_models("models")
-# Force un clean immédiat après le chargement lourd
-gc.collect()
-
-# --- CACHE LÉGER POUR LES MÉTHADONNÉES ---
-METADATA_CACHE = {}
-
-def load_artist_metadata_light():
-    """Charge artist_popularity.csv sans Pandas (csv natif)."""
-    global METADATA_CACHE
-    if METADATA_CACHE:
-        return METADATA_CACHE
-        
-    csv_path = "data/artist_popularity.csv"
-    # Fallback si le dossier data n'est pas à la racine du backend
-    if not os.path.exists(csv_path):
-        # Essayer de chercher 'dataset_audio.csv' si c'est ce que l'utilisateur voulait
-        # Mais on privilégie artist_popularity pour la légèreté
-        return {}
-
-    try:
-        with open(csv_path, mode='r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                # On ne garde que l'essentiel pour économiser la RAM
-                try:
-                    search_name = row.get('search_name', 'Unknown')
-                    views = float(row.get('youtube_avg_views', 0))
-                    METADATA_CACHE[search_name] = {'views': views}
-                except ValueError:
-                    continue
-        print(f"✅ Metadata chargées : {len(METADATA_CACHE)} artistes.")
-        return METADATA_CACHE
-    except Exception as e:
-        print(f"⚠️ Erreur chargement metadata : {e}")
-        return {}
-
-# Chargeons les metadata au démarrage
-load_artist_metadata_light()
-
-
-# --- FONCTIONS UTILITAIRES ---
-def extract_features_light(file_path):
+# --- FONCTION D'EXTRACTION OPTIMISÉE ---
+def extract_features(audio_path):
     """
-    Extraction ULTRA-LÉGÈRE (Memory Optimized).
-    Ne charge que les 30 premières secondes une seule fois.
+    Extrait exactement les features attendues par le modèle (FEATURE_COLUMNS).
+    Charge max 30s de l'audio.
     """
-    SAMPLE_RATE = 22050
-    DURATION_SLICE = 30
-    
     try:
-        # --- CHARGEMENT UNIQUE ET LIMITÉ ---
-        # On charge SEULEMENT 30 secondes, et on force le sample rate
-        y, sr = librosa.load(file_path, sr=SAMPLE_RATE, duration=DURATION_SLICE)
+        # 1. Chargement léger (30s)
+        y, sr = librosa.load(audio_path, duration=30)
         
-        # Ignorer si trop court (<5s)
-        if len(y) < (sr * 5):
-            return []
-            
-        # Padding si < 30s
-        target_length = sr * DURATION_SLICE
-        if len(y) < target_length:
-            y = np.pad(y, (0, target_length - len(y)), 'constant')
+        # Features dict
+        features = {}
         
-        # --- EXTRACTION ---
+        # Tempo
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        rms = librosa.feature.rms(y=y)
-        zcr = librosa.feature.zero_crossing_rate(y)
-        spec_cent = librosa.feature.spectral_centroid(y=y, sr=sr)
-        spec_roll = librosa.feature.spectral_rolloff(y=y, sr=sr)
-        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+        features['tempo'] = float(tempo)
+        
+        # Features spectrales (Moyennes)
+        features['rms_mean'] = np.mean(librosa.feature.rms(y=y))
+        features['spec_cent_mean'] = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
+        features['spec_bw_mean'] = np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr))
+        features['spec_roll_mean'] = np.mean(librosa.feature.spectral_rolloff(y=y, sr=sr))
+        features['zcr_mean'] = np.mean(librosa.feature.zero_crossing_rate(y))
+        
+        # Chroma (12 notes) - Moyennes
         chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-
-        tempo_val = float(tempo.item()) if hasattr(tempo, 'item') else float(tempo)
-        
-        features = {"tempo": tempo_val}
-        
-        features["rms_mean"] = float(np.mean(rms))
-        features["rms_var"] = float(np.var(rms))
-        features["zcr_mean"] = float(np.mean(zcr))
-        features["zcr_var"] = float(np.var(zcr))
-        features["spec_cent_mean"] = float(np.mean(spec_cent))
-        features["spec_cent_var"] = float(np.var(spec_cent))
-        features["spec_roll_mean"] = float(np.mean(spec_roll))
-        features["spec_roll_var"] = float(np.var(spec_roll))
-
-        for i in range(13):
-            features[f"mfcc_{i}_mean"] = float(np.mean(mfccs[i]))
-            features[f"mfcc_{i}_var"]  = float(np.var(mfccs[i]))
         for i in range(12):
-            features[f"chroma_{i}_mean"] = float(np.mean(chroma[i]))
-            features[f"chroma_{i}_var"]  = float(np.var(chroma[i]))
+            features[f'chroma_{i}_mean'] = np.mean(chroma[i])
             
-        # Libération explicite
-        del y, rms, zcr, spec_cent, spec_roll, mfccs, chroma
+        # MFCC (20 coefficients) - Moyennes
+        # Note : Le CSV peut en contenir moins (ex: 13), le filtrage final gérera ça.
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+        for i in range(20):
+            features[f'mfcc_{i}_mean'] = np.mean(mfcc[i])
+            
+        # 2. Alignement et Construction du Vecteur
+        # On ne renvoie QUE les colonnes connues du modèle, dans le BON ORDRE.
+        # Si une colonne manque (ex: 'spec_bw_mean' non présent dans le CSV), elle est ignorée.
+        # Si une colonne du CSV manque ici (ex: variances), on a un problème -> Mais on a filtré sur '_mean' au load.
         
-        return [features] # Single dict in list
-        
+        final_vector = []
+        if FEATURE_COLUMNS is None:
+             print("⚠️ Modèle non initialisé, pas de colonnes de features.")
+             return None
+
+        for col in FEATURE_COLUMNS:
+            if col in features:
+                final_vector.append(features[col])
+            else:
+                # Fallback critique : si une feature attendue n'est pas calculée
+                # Pour éviter le crash, on met 0.0, mais ça ne devrait pas arriver si le CSV et ce code sont synchrones.
+                # print(f"⚠️ Feature manquante lors de l'extraction : {col}") 
+                # (Commenté pour éviter le spam de logs si spec_bw manque)
+                final_vector.append(0.0)
+                
+        return np.array(final_vector)
+
     except Exception as e:
-        print(f"Erreur extraction: {e}")
-        return []
+        print(f"Erreur extraction audio: {e}")
+        return None
 
 # --- ROUTES ---
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "mode": "light_optimized"}
+    return {"status": "API is running", "model_loaded": MODEL_KNN is not None}
 
 @app.post("/predict")
-async def predict_audio(file: UploadFile = File(...)):
-    if not file.filename.endswith(('.mp3', '.wav', '.m4a')):
-        raise HTTPException(status_code=400, detail="Format non supporté")
-
-    temp_filename = f"temp_{file.filename}"
+async def predict_type_beat(file: UploadFile = File(...)):
+    """
+    Reçoit un fichier audio, l'analyse, et retourne les 5 beats les plus proches.
+    """
+    if MODEL_KNN is None:
+        raise HTTPException(status_code=503, detail="Le modèle n'est pas encore prêt ou le dataset a échoué.")
+    
+    # Création dossier temp si besoin
+    os.makedirs("temp_audio", exist_ok=True)
+    
+    # Chemin temporaire
+    file_location = f"temp_audio/{file.filename}"
     
     try:
-        # 1. Sauvegarde streamée pour limiter la RAM
-        with open(temp_filename, "wb") as buffer:
+        # 1. Sauvegarde disque
+        with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
         # 2. Extraction
-        features_list_dicts = extract_features_light(temp_filename)
+        features_vector = extract_features(file_location)
         
-        if not features_list_dicts:
-            raise HTTPException(status_code=422, detail="Échec extraction audio")
-
-        # 3. Alignement des colonnes (Critique : Scaler attend un ordre précis)
-        X_input = []
-        if EXPECTED_FEATURES is not None:
-            # Conversion optimisée
-            feature_names = list(EXPECTED_FEATURES)
-            for f_dict in features_list_dicts:
-                # On utilise .get(k, 0.0) pour la robustesse
-                row = [f_dict.get(k, 0.0) for k in feature_names]
-                X_input.append(row)
-        else:
-            # Fallback (Dangereux si l'ordre change, mais mieux que crash)
-            for f_dict in features_list_dicts:
-                X_input.append(list(f_dict.values()))
-
-        # 4. Conversion Numpy (Type float32 pour économiser 50% RAM vs float64)
-        X_np = np.array(X_input, dtype=np.float32)
-
-        # 5. Prédiction
-        # Transform
-        X_scaled = SCALER.transform(X_np)
-        
-        # Predict Proba
-        probas = MODEL.predict_proba(X_scaled)
-        
-        # Moyenne
-        avg_probas = probas.mean(axis=0)
-        
-        # 6. Mapping Classes
-        classes = ENCODER.classes_
-        results = []
-        for i, class_name in enumerate(classes):
-            results.append((class_name, float(avg_probas[i])))
+        if features_vector is None or len(features_vector) == 0:
+            raise HTTPException(status_code=400, detail="Impossible d'extraire les features audio.")
             
-        results.sort(key=lambda x: x[1], reverse=True)
+        # Reshape pour predict (1, n_features)
+        features_vector = features_vector.reshape(1, -1)
         
-        # 7. Enrichissement avec Metadata (Sans Pandas)
-        top_5 = []
-        metadata = load_artist_metadata_light()
+        # 3. Scaling
+        scaled_features = SCALER.transform(features_vector)
         
-        for artist, score in results[:5]:
-            meta = metadata.get(artist, {})
-            top_5.append({
-                "artist": artist,
-                "score": score,
-                "views": meta.get('views', 0)
+        # 4. Recherche KNN
+        distances, indices = MODEL_KNN.kneighbors(scaled_features)
+        
+        # 5. Récupération des Résultats
+        recommendations = []
+        
+        for i, idx in enumerate(indices[0]):
+            neighbor_row = DF_AUDIO.iloc[idx]
+            dist = float(distances[0][i])
+            
+            # Gestion des champs qui peuvent manquer dans le CSV
+            filename = str(neighbor_row.get('filename', 'Unknown'))
+            label = str(neighbor_row.get('label', 'Unknown'))
+            
+            recommendations.append({
+                "rank": i + 1,
+                "filename": filename,
+                "label": label, 
+                "distance": round(dist, 4),
+                "preview_path": f"/audio/{filename}" # Exemple
             })
-
-        top_result = top_5[0]
-
-        # Clean Memory
-        del X_input
-        del X_np
-        del X_scaled
-        del probas
-        gc.collect()
-
+            
         return {
-            "prediction": top_result["artist"],
-            "confidence": top_result["score"],
-            "details": top_5
+            "input_filename": file.filename,
+            "recommendations": recommendations
         }
 
     except Exception as e:
+        print(f"Erreur route predict: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
     finally:
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
-        gc.collect()
-        try:
-            ctypes.CDLL('libc.so.6').malloc_trim(0)
-        except:
-            pass
+        # Nettoyage fichier temp
+        if os.path.exists(file_location):
+            try:
+                os.remove(file_location)
+            except:
+                pass
+
+if __name__ == "__main__":
+    import uvicorn
+    # Pour tester en local
+    uvicorn.run(app, host="0.0.0.0", port=8000)

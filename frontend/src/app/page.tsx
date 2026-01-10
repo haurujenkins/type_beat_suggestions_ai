@@ -1,133 +1,275 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Upload, Music, Play, BarChart3, Loader2, Search, Zap, AlertCircle } from 'lucide-react';
+
+// Types pour la réponse API
+interface PredictionDetail {
+  artist: string;
+  score: number;
+  views: number;
+}
+
+interface ApiResponse {
+  prediction: string;
+  confidence: number;
+  details: PredictionDetail[];
+}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'success' | 'error'>('idle');
+  const [result, setResult] = useState<ApiResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Remplacez cette URL par votre URL Render (ex: https://mon-api.onrender.com/predict)
-  // Pour le test local, utilisez http://localhost:8000/predict
+  // URL API depuis variable d'environnement (avec fallback localhost pour le dev)
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/predict';
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setResult(null);
-      setError(null);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      validateAndSetFile(e.dataTransfer.files[0]);
     }
   };
 
-  const handleUpload = async () => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      validateAndSetFile(e.target.files[0]);
+    }
+  };
+
+  const validateAndSetFile = (selectedFile: File) => {
+    if (selectedFile.type === 'audio/mpeg' || selectedFile.type === 'audio/wav' || selectedFile.name.endsWith('.mp3') || selectedFile.name.endsWith('.wav')) {
+      setFile(selectedFile);
+      setErrorMessage(null);
+      setStatus('idle');
+      setResult(null);
+    } else {
+      setErrorMessage("Format non supporté. Merci d'uploader un fichier MP3 ou WAV.");
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!file) return;
 
-    setLoading(true);
-    setError(null);
+    setStatus('uploading');
+    setErrorMessage(null);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+      // Simulation d'étape d'upload pour l'UX si c'est très rapide
+      await new Promise(r => setTimeout(r, 500));
+      setStatus('analyzing');
+
       const response = await fetch(API_URL, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'analyse');
+        throw new Error(`Erreur serveur (${response.status})`);
       }
 
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
       setResult(data);
+      setStatus('success');
     } catch (err) {
-      setError('Impossible de contacter le serveur. (Il peut être en cours de démarrage sur Render, réessayez dans 30s)');
       console.error(err);
-    } finally {
-      setLoading(false);
+      setStatus('error');
+      setErrorMessage("Impossible de contacter l'IA. Le serveur redémarre peut-être, réessayez dans 30s.");
     }
   };
 
-  return (
-    <main className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
-        <h1 className="text-3xl font-extrabold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-          TYPE BEAT AI
-        </h1>
-        <p className="text-gray-400 text-center mb-8 text-sm">
-          Découvrez quel artiste matcherait avec votre instru
-        </p>
+  const formatPercentage = (score: number) => Math.round(score * 100);
 
-        {/* Upload Zone */}
-        <div className="mb-6">
-          <label 
-            htmlFor="audio-upload" 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:bg-gray-700 transition-colors bg-gray-750"
-          >
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <svg className="w-8 h-8 mb-3 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-              </svg>
-              <p className="text-sm text-gray-400">
-                {file ? <span className="text-green-400 font-semibold">{file.name}</span> : "Click to upload or drag and drop"}
-              </p>
-              <p className="text-xs text-gray-500">MP3, WAV (Max 10MB)</p>
-            </div>
-            <input id="audio-upload" type="file" className="hidden" accept=".mp3, .wav" onChange={handleFileChange} />
-          </label>
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+      
+      {/* BACKGROUND GRADIENTS */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-12 md:py-20">
+        
+        {/* HERO SECTION */}
+        <div className="text-center mb-16 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/50 border border-slate-700/50 text-indigo-400 text-sm font-medium backdrop-blur-sm animate-fade-in">
+            <Zap size={14} fill="currentColor" />
+            <span>AI Powered Audio Analysis v2.0</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-4">
+            Type Beat <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Finder</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Upload ton mp3, l'IA trouve les sons similaires parmi +50 artistes pros.
+          </p>
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={handleUpload}
-          disabled={!file || loading}
-          className={`w-full py-3 px-4 rounded-xl font-bold text-lg transition-all transform ${
-            !file || loading 
-              ? 'bg-gray-600 cursor-not-allowed opacity-50' 
-              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 hover:scale-[1.02] shadow-lg'
-          }`}
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Analyse en cours...
-            </span>
-          ) : (
-            'Analyser le Style'
-          )}
-        </button>
+        {/* UPLOAD SECTION */}
+        <div className="max-w-xl mx-auto mb-20">
+          <div 
+            className={`
+              relative group cursor-pointer
+              border-2 border-dashed rounded-3xl p-10 text-center transition-all duration-300 ease-out
+              ${isDragOver 
+                ? 'border-indigo-500 bg-indigo-500/10 scale-[1.02]' 
+                : 'border-slate-700 bg-slate-900/40 hover:border-slate-500 hover:bg-slate-800/40'}
+            `}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".mp3,.wav" 
+              onChange={handleFileSelect} 
+            />
 
-        {/* Results */}
-        {error && (
-            <div className="mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-200 text-sm text-center">
-                {error}
-            </div>
-        )}
-
-        {result && (
-          <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-gray-700/50 rounded-xl p-4 border border-gray-600 text-center">
-              <div className="text-sm text-gray-400 uppercase tracking-widest mb-1">Résultat Principal</div>
-              <div className="text-4xl font-black text-white mb-2">{result.prediction}</div>
-              <div className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-bold">
-                {(result.confidence * 100).toFixed(1)}% de correspondance
+            <div className="flex flex-col items-center gap-4">
+              <div className={`p-4 rounded-full bg-slate-800 transition-colors ${isDragOver ? 'text-indigo-400' : 'text-slate-400 group-hover:text-indigo-400'}`}>
+                {status === 'analyzing' || status === 'uploading' ? (
+                   <Loader2 size={40} className="animate-spin" />
+                ) : (
+                   <Upload size={40} />
+                )}
               </div>
-            </div>
-
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold text-gray-400 mb-2 ml-1">Autres possibilités :</h3>
+              
               <div className="space-y-2">
-                {result.details.slice(1, 4).map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between items-center bg-gray-800/80 p-3 rounded-lg border border-gray-700">
-                    <span className="font-medium">{item.artist}</span>
-                    <span className="text-gray-400 text-xs">{(item.score * 100).toFixed(0)}%</span>
-                  </div>
-                ))}
+                <h3 className="text-xl font-semibold text-white">
+                  {file ? file.name : "Glisse ton fichier ici"}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {file ? (
+                    <span className="text-indigo-400 font-medium">Prêt pour l'analyse</span>
+                  ) : (
+                    "MP3 ou WAV (Max 10Mo)"
+                  )}
+                </p>
               </div>
+            </div>
+            
+            {/* PROGRESS BAR SIMULATION */}
+            {status === 'analyzing' && (
+              <div className="absolute bottom-0 left-0 h-1 bg-indigo-500/20 w-full rounded-b-3xl overflow-hidden">
+                <div className="h-full bg-indigo-500 animate-progress-indeterminate"></div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!file || status === 'uploading' || status === 'analyzing'}
+            className={`
+              w-full mt-6 py-4 px-6 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 transition-all
+              ${!file 
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:scale-[1.02] active:scale-[0.98] shadow-indigo-500/25'}
+            `}
+          >
+            {status === 'analyzing' ? (
+              <>
+                <Loader2 className="animate-spin" /> Analyse spectrale en cours...
+              </>
+            ) : (
+               <>
+                <Search size={20} /> Lancer la recherche
+               </>
+            )}
+          </button>
+
+          {errorMessage && (
+            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={18} />
+              {errorMessage}
+            </div>
+          )}
+        </div>
+
+        {/* RESULTS SECTION */}
+        {result && status === 'success' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+              <BarChart3 className="text-indigo-400" /> Résultats de l'analyse
+            </h2>
+
+            {/* TOP MATCH */}
+            <div className="mb-12 cursor-pointer group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900/50 to-slate-900 border border-indigo-500/30 p-8 md:p-10 transition-all hover:border-indigo-500/50">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Music size={200} />
+                </div>
+                
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div className="text-indigo-300 font-medium tracking-wider text-sm mb-2 uppercase">Match Principal</div>
+                        <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-2">
+                            {result.prediction}
+                        </h3>
+                        <p className="text-lg text-slate-400 flex items-center gap-2">
+                            Type Beat • {formatPercentage(result.confidence)}% de similarité
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                         <div className="text-right hidden md:block">
+                            <div className="text-3xl font-bold text-white">{formatPercentage(result.confidence)}%</div>
+                            <div className="text-xs text-slate-500">Confidence Score</div>
+                         </div>
+                         <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                             <Play fill="currentColor" className="ml-1" />
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* GRID OF SUGGESTIONS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {result.details.slice(1, 5).map((detail, idx) => (
+                <div 
+                    key={idx}
+                    className="group bg-slate-900/40 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-600 p-5 rounded-2xl transition-all hover:-translate-y-1"
+                >
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-indigo-600 transition-colors">
+                            <Music size={18} />
+                        </div>
+                        <span className="text-xs font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded">
+                            {formatPercentage(detail.score)}% MATCH
+                        </span>
+                    </div>
+                    
+                    <h4 className="text-xl font-bold text-slate-100 mb-1 truncate">{detail.artist}</h4>
+                    <p className="text-sm text-slate-500 mb-4">Type Beat Style</p>
+                    
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                            className="bg-indigo-500 h-full rounded-full" 
+                            style={{ width: `${formatPercentage(detail.score)}%` }}
+                        />
+                    </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
