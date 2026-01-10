@@ -322,11 +322,25 @@ async def predict_type_beat(file: UploadFile = File(...)):
                 "is_trending": False 
             })
 
-        # 5. Tri et Top 8
+        # 5. Tri et Filtrage par Artiste Unique (Deduplication)
+        # On trie d'abord par score décroissant pour avoir les meilleures chansons en premier
         final_results.sort(key=lambda x: x['score'], reverse=True)
-        top_8 = final_results[:8]
         
-        # 6. Logique Trending (dans le Top 8)
+        unique_artist_results = []
+        seen_artists = set()
+        
+        for res in final_results:
+            artist_name = res['artist']
+            if artist_name not in seen_artists:
+                unique_artist_results.append(res)
+                seen_artists.add(artist_name)
+            
+            if len(unique_artist_results) >= 8:
+                break
+        
+        top_8 = unique_artist_results
+        
+        # 6. Logique Trending (dans le Top 8 unique)
         if top_8:
             # On identifie les 3 qui ont la plus grosse popularité
             top_by_pop = sorted(top_8, key=lambda x: x['popularity_score'], reverse=True)
