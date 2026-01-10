@@ -32,39 +32,37 @@ FEATURE_COLUMNS = []
 
 # --- UTILITAIRES AUDIO ---
 
-def get_audio_slices(audio_path, target_duration=30, n_slices=5):
+def get_audio_slices(audio_path, target_duration=15, n_slices=3):
     """
-    Charge l'audio et retourne 5 segments de 30 secondes répartis équitablement.
+    OPTIMISATION RENDER (FREE TIER):
+    - Réduit duration à 15s (suffisant pour tempo/timbre).
+    - Réduit n_slices à 3 (Intro, Verse, Outro approx).
+    - Utilise res_type='kaiser_fast' pour le loading.
     """
-    # 1. Charger l'audio complet (sr=22050 standard librosa)
-    y, sr = librosa.load(audio_path, sr=22050, mono=True)
+    # 1. Charger l'audio complet (kaiser_fast est beaucoup plus rapide)
+    y, sr = librosa.load(audio_path, sr=22050, mono=True, res_type='kaiser_fast')
     
     total_samples = len(y)
     target_samples = target_duration * sr
     
     segments = []
 
-    # Cas A : Audio trop court (< 30s) -> Padding
+    # Cas A : Audio court
     if total_samples < target_samples:
         padding = target_samples - total_samples
         y_padded = np.pad(y, (0, padding), 'constant')
         segments.append(y_padded)
         return segments, sr
 
-    # Cas B : Audio long -> Sliding Window (5 fenêtres)
-    # On calcule les points de départ pour couvrir tout le morceau
-    playable_area = total_samples - target_samples
+    # Cas B : 3 fenêtres startégiques (10%, 45%, 80%)
+    # Évite de calculer trop de slices
+    positions = [0.1, 0.45, 0.8] 
     
-    if playable_area <= 0:
-        # Juste assez pour 1 slice exact
-        segments.append(y[:target_samples])
-    else:
-        # 5 points de départ équidistants (ex: 0%, 20%, 40%, 60%, 80% de la zone jouable)
-        start_indices = np.linspace(0, playable_area, n_slices, dtype=int)
-        for start in start_indices:
-            end = start + target_samples
-            segments.append(y[start:end])
-            
+    for pos in positions:
+        start = int((total_samples - target_samples) * pos)
+        if start < 0: start = 0
+        end = start + target_samples
+        
     return segments, sr
 
 def extract_features_from_segment(y, sr):
