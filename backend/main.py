@@ -13,7 +13,9 @@ import gc
 
 # --- VARIABLES GLOBALES ---
 DATASET_PATH = "data/dataset_audio.csv"
+POPULARITY_PATH = "data/artist_popularity.csv"
 DF_AUDIO = None
+DF_POPULARITY = None
 SCALER = None
 MODEL_KNN = None
 FEATURE_COLUMNS = []
@@ -21,54 +23,56 @@ FEATURE_COLUMNS = []
 # --- LIFESPAN (Gestion au démarrage) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global DF_AUDIO, SCALER, MODEL_KNN, FEATURE_COLUMNS
+    global DF_AUDIO, DF_POPULARITY, SCALER, MODEL_KNN, FEATURE_COLUMNS
     print("🔄 Démarrage de l'API & Entraînement du modèle à la volée...")
     
     try:
-        # 1. Charger le CSV
-        # On suppose que le CWD est la racine du projet, donc data/ est accessible
-        # Sinon ajuster le path
-        if not os.path.exists(DATASET_PATH):
-            # Fallback si on est dans le dossier backend
-            if os.path.exists("../data/dataset_audio.csv"):
-                 DATASET_PATH_FIX = "../data/dataset_audio.csv"
-            else:
-                 print(f"⚠️ Warning: Dataset introuvable à {DATASET_PATH}")
-                 DATASET_PATH_FIX = DATASET_PATH
-        else:
-            DATASET_PATH_FIX = DATASET_PATH
+        # 0. Gestion des chemins (Fallback local vs Docker)
+        def resolve_path(path):
+            if os.path.exists(path): return path
+            if os.path.exists(f"../{path}"): return f"../{path}"
+            return path
+            
+        real_dataset_path = resolve_path(DATASET_PATH)
+        real_popularity_path = resolve_path(POPULARITY_PATH)
 
-        if os.path.exists(DATASET_PATH_FIX):
-            df = pd.read_csv(DATASET_PATH_FIX)
+        # 1. Charger la Popularité (Metadata)
+        if os.path.exists(real_popularity_path):
+            try:
+                DF_POPULARITY = pd.read_csv(real_popularity_path)
+                # Création clé de recherche normalisée
+                DF_POPULARITY['search_key'] = DF_POPULARITY['search_name'].astype(str).str.lower().str.strip()
+                print(f"🌟 Popularité chargée : {DF_POPULARITY.shape[0]} artistes")
+            except Exception as e:
+                print(f"⚠️ Erreur chargement popularité : {e}")
+        else:
+            print(f"⚠️ Fichier popularité introuvable ({real_popularity_path})")
+
+        # 2. Charger le Dataset Audio & Train
+        if os.path.exists(real_dataset_path):
+            df = pd.read_csv(real_dataset_path)
             print(f"📊 Dataset brut chargé : {df.shape}")
 
-            # 2. Nettoyage et Sélection des Features
-            # On ne garde que les colonnes numériques pertinentes
-            # La consigne est d'utiliser les MOYENNES ('_mean') et le 'tempo'.
-            # On exclut explicitement les variances ('_var') pour correspondre à la logique "light".
+            # Nettoyage et Sélection des Features
+            # On ne garde que les colonnes numériques pertinentes (Moyennes + Tempo)
             cols_to_keep = [c for c in df.columns if c == 'tempo' or c.endswith('_mean')]
             
-            # Filtrer le DF (Exclut filename, label, et les variances)
+            # Filtrer le DF
             df_features = df[cols_to_keep].copy()
-            
-            # Nettoyage des NaN éventuels
             df_features = df_features.dropna()
             
-            # Sauvegarde la liste finale des colonnes pour l'alignement lors de l'inférence
+            # Sauvegarde la liste finale des colonnes
             FEATURE_COLUMNS = df_features.columns.tolist()
-            print(f"🎯 Features sélectionnées ({len(FEATURE_COLUMNS)}) : {FEATURE_COLUMNS[:5]}...")
 
-            # 3. Entraînement du Scaler
+            # Entraînement du Scaler
             SCALER = StandardScaler()
             X_scaled = SCALER.fit_transform(df_features)
             
-            # 4. Entraînement du modèle KNN
-            # Metric 'cosine' est souvent meilleure pour l'audio que 'euclidean'
-            MODEL_KNN = NearestNeighbors(n_neighbors=5, metric='cosine', algorithm='brute')
+            # Entraînement du modèle KNN (10 voisins pour avoir du choix)
+            MODEL_KNN = NearestNeighbors(n_neighbors=10, metric='cosine', algorithm='brute')
             MODEL_KNN.fit(X_scaled)
             
-            # 5. Stockage du 'référentiel' (pour récupérer les infos artistes après prédiction)
-            # On garde le DF original aligné avec X_scaled (attention aux index si dropna)
+            # Stockage du 'référentiel' aligned
             DF_AUDIO = df.loc[df_features.index].reset_index(drop=True)
             
             # Nettoyage RAM
@@ -79,17 +83,17 @@ async def lifespan(app: FastAPI):
             
             print("✅ Modèle entraîné et prêt !")
         else:
-            print("❌ IMPOSSIBLE de charger le dataset. L'API ne pourra pas prédire.")
+            print(f"❌ IMPOSSIBLE de charger le dataset ({real_dataset_path}).")
         
     except Exception as e:
         print(f"❌ Erreur critique au démarrage : {e}")
-        # On ne quitte pas forcément, mais l'API sera dégradée
     
     yield
     
     # Clean up à l'extinction
     print("🛑 Arrêt de l'API. Nettoyage mémoire.")
     del DF_AUDIO
+    del DF_POPULARITY
     del SCALER
     del MODEL_KNN
     gc.collect()
@@ -217,12 +221,29 @@ async def predict_type_beat(file: UploadFile = File(...)):
             filename = str(neighbor_row.get('filename', 'Unknown'))
             label = str(neighbor_row.get('label', 'Unknown'))
             
+            # Récupération Stats Popularité
+            views = 0
+            popularity = 0
+            
+            if DF_POPULARITY is not None:
+                # Recherche insensible à la casse
+                key = label.lower().strip()
+                match = DF_POPULARITY[DF_POPULARITY['search_key'] == key]
+                if not match.empty:
+                    try:
+                        views = float(match.iloc[0]['youtube_avg_views'])
+                        popularity = int(match.iloc[0]['popularity'])
+                    except:
+                        pass # Valeurs par défaut
+
             recommendations.append({
                 "rank": i + 1,
                 "filename": filename,
                 "label": label, 
                 "distance": round(dist, 4),
-                "preview_path": f"/audio/{filename}" # Exemple
+                "preview_path": f"/audio/{filename}",
+                "views": views,
+                "popularity": popularity
             })
             
         return {
